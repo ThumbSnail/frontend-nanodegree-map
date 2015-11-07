@@ -1,0 +1,22 @@
+
+/* Interesting note from:
+   https://developers.google.com/maps/documentation/javascript/tutorial
+
+   Note that divs usually take their width from their containing element,
+   and empty divs usually have 0 height. For this reason, you must always
+   set a height on the <div> explicitly.
+
+   Also:
+   This CSS declaration indicates that the map container <div> (with id map)
+   should take up 100% of the height of the HTML body. Note that we must
+   specifically declare those percentages for <body> and <html> as well.
+*/
+
+html,
+body {
+	height: 100%;
+}
+
+.map {
+	height: 100%;
+}
