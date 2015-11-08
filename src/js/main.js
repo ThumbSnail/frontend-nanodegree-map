@@ -1,5 +1,5 @@
 
-/* Uncomment for map
+//Uncomment for map
 var gMap;
 
 function initMap() {
@@ -9,10 +9,55 @@ function initMap() {
 	});
 }
 
-$(document).ready(initMap);
-*/
 
+var parksData;
+var arrMarkers = [];  //or should these markers be added as a property of the Park object?
 
+$('#btn-create').on('click', createMapMarkers);
+$('#btn-place').on('click', placeMapMarkers);
+
+function createMapMarkers() {
+	var len = parksData.length;
+	for (var i = 0; i < len; i++) {
+		var marker = new google.maps.Marker({
+		    position: parksData[i].coords,
+		    title: parksData[i].name
+		});
+
+		arrMarkers.push(marker);
+	}
+}
+
+function placeMapMarkers() {
+	var len = arrMarkers.length;
+	for (var i = 0; i < len; i++) {
+		arrMarkers[i].setMap(gMap);
+	}
+
+	animateMarkers();
+}
+
+//adapted from:  https://developers.google.com/maps/documentation/javascript/markers
+function animateMarkers() {
+	var len = arrMarkers.length;
+	for (var i = 0; i < len; i++) {
+		arrMarkers[i].addListener('click', function() {
+			if (this.getAnimation()) {
+				this.setAnimation(null);
+			}
+			else {
+				this.setAnimation(google.maps.Animation.BOUNCE);
+			}
+		});
+	}
+}
+
+$(document).ready(function() {
+	parksData = JSON.parse(localStorage.getItem('arrParks'));
+	initMap();
+});
+
+/*
 $(document).ready(function() {
 	//Link to a Wiki page containing a table that lists all of Indiana's State Parks (and their coordinates)
 	var wikiLink = 'http://en.wikipedia.org/w/api.php?action=parse&section=1&prop=text&page=List_of_Indiana_state_parks&format=json&callback=?';
@@ -21,7 +66,14 @@ $(document).ready(function() {
 	//$.getJSON(wikiLink, wikiCallback);
 	  //since^ I'm currently saving the data in localStorage, save on API calls.
 
+
+	//test retrieval of parksData in localStorage
+	parksData = JSON.parse(localStorage.getItem('arrParks'));
+
+	console.log(parksData);  //cool.  now test putting the markers on the map?
+
 });
+*/
 
 function wikiCallback(data) {
 	if (data.parse.text) {  //Success!
@@ -32,6 +84,15 @@ function wikiCallback(data) {
 		console.log("Error in getting Wiki data.");
 	}	
 }
+
+var Park = function(name, img, desc, coords) {
+	this.name = name;
+	this.img = img;
+	this.desc = desc;
+	this.coords = coords;
+};
+
+var arrParks = [];
 
 
 $('#btn').on('click', function() {
@@ -49,6 +110,21 @@ $('#btn').on('click', function() {
 	arrDescs = trimDescs(arrDescs);
 
 	// TODO:  Turn this into model data.
+	var numParks = arrNames.length;
+	for (var i = 0; i < numParks; i++) {
+		var park = new Park(arrNames[i], arrImages[i], arrDescs[i], arrCoords[i]);
+
+		arrParks.push(park);
+	}
+
+	/*  Save this data into localStorage
+	 *  Help/Sources:
+	 *  http://stackoverflow.com/questions/3357553/how-to-store-an-array-in-localstorage
+	*/
+
+	//huh, is this a SUPER slow action?  [seems like it takes forever...]
+	localStorage.setItem('arrParks', JSON.stringify(arrParks));
+
 
 
 	/*  function tableColumnToArray(colIndex, containsImages)
@@ -109,12 +185,12 @@ $('#btn').on('click', function() {
 			var parenIndex = string.search(/\(/);
 			var semiColonIndex = string.search(/;/);
 
-			var lat = parseFloat(string.substr(semiColonIndex - 6, semiColonIndex));
-			var lng = parseFloat(string.substr(semiColonIndex + 1, parenIndex - 1));
+			var latitude = parseFloat(string.substr(semiColonIndex - 6, semiColonIndex));
+			var longitude = parseFloat(string.substr(semiColonIndex + 1, parenIndex - 1));
 
 			array[index] = {
-				latitude: lat,
-				longitude: lng
+				lat: latitude,
+				lng: longitude
 			};
 		});
 
