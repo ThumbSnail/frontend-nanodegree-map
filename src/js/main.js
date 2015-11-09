@@ -10,19 +10,27 @@ function initMap() {
 }
 
 
-var parksData;
+var arrParks;
 var arrMarkers = [];  //or should these markers be added as a property of the Park object?
+var activeMarkerIndex = -1;
+var infoWindow = new google.maps.InfoWindow();  //just one so that only one can be open at a time
+google.maps.event.addListener(infoWindow,'closeclick',function() {
+	arrMarkers[activeMarkerIndex].setAnimation(null);
+	activeMarkerIndex = -1;
+});
 
 $('#btn-create').on('click', createMapMarkers);
 $('#btn-place').on('click', placeMapMarkers);
 
 function createMapMarkers() {
-	var len = parksData.length;
+	var len = arrParks.length;
 	for (var i = 0; i < len; i++) {
 		var marker = new google.maps.Marker({
-		    position: parksData[i].coords,
-		    title: parksData[i].name
+		    position: arrParks[i].coords,
+		    title: arrParks[i].name
 		});
+
+		marker.id = i;
 
 		arrMarkers.push(marker);
 	}
@@ -34,26 +42,72 @@ function placeMapMarkers() {
 		arrMarkers[i].setMap(gMap);
 	}
 
-	animateMarkers();
+	setupMarkerFeedback();
 }
 
+// TODO:  I feel like only one marker should animate at a time.  I suppose a solution
+//is to give each marker an index/id.  When clicked, update the activeMarkerIndex.
+//then, disable that 
+
 //adapted from:  https://developers.google.com/maps/documentation/javascript/markers
-function animateMarkers() {
+function setupMarkerFeedback() {
 	var len = arrMarkers.length;
 	for (var i = 0; i < len; i++) {
 		arrMarkers[i].addListener('click', function() {
-			if (this.getAnimation()) {
+			if (this.getAnimation()) {  //then you've clicked the same marker
 				this.setAnimation(null);
+				infoWindow.close();
+				activeMarkerIndex = -1;
 			}
 			else {
 				this.setAnimation(google.maps.Animation.BOUNCE);
+				infoWindow.setContent(getDataForInfoWindow(this.id));
+				infoWindow.open(gMap, this);
+				if (activeMarkerIndex > -1) {  //a previous marker is still bouncing
+					arrMarkers[activeMarkerIndex].setAnimation(null);
+				}
+				activeMarkerIndex = this.id;
 			}
 		});
 	}
 }
 
+function getDataForInfoWindow(index) {
+	var title = '<h1 class="info-title"><a href="https://en.wikipedia.org/wiki/'
+		+ arrParks[index].name + ' State Park" target="_blank">' + arrParks[index].name
+		+ '</a></h1>';
+	var img = arrParks[index].img ? '<div class="info"><img class="info-img" src="'
+		+ arrParks[index].img + '"></div>' : '';
+	var desc = arrParks[index].desc ? '<p>' + arrParks[index].desc + '</p>' : '';
+	var wikiEnd = 'via <a href="https://en.wikipedia.org/wiki/'
+		+ 'List_of_Indiana_state_parks" target="_blank">Wikipedia</a></p>';
+	var attrWeather = '<p class="attribution">Weather data via OpenWeatherMap</p>';
+
+	var wikiStart = '';
+	if (img && desc) {
+		wikiStart = '<p class="attribution">Photo and fact ';
+	}
+	else {
+		if (img) {
+			wikiStart = '<p class="attribution">Photo ';
+		}
+		else if (desc) {
+			wikiStart = '<p class="attribution">Fact ';
+		}
+	}
+
+	if (!wikiStart) {
+		wikiEnd = '';
+	}
+
+
+	var HTML = title + img + desc + wikiStart + wikiEnd + attrWeather;
+
+	return HTML;
+}
+
 $(document).ready(function() {
-	parksData = JSON.parse(localStorage.getItem('arrParks'));
+	arrParks = JSON.parse(localStorage.getItem('arrParks'));
 	initMap();
 });
 
@@ -67,10 +121,10 @@ $(document).ready(function() {
 	  //since^ I'm currently saving the data in localStorage, save on API calls.
 
 
-	//test retrieval of parksData in localStorage
-	parksData = JSON.parse(localStorage.getItem('arrParks'));
+	//test retrieval of arrParks in localStorage
+	arrParks = JSON.parse(localStorage.getItem('arrParks'));
 
-	console.log(parksData);  //cool.  now test putting the markers on the map?
+	console.log(arrParks);  //cool.  now test putting the markers on the map?
 
 });
 */
