@@ -1,64 +1,115 @@
 
 /* Interesting note from:
-   https://developers.google.com/maps/documentation/javascript/tutorial
+	 https://developers.google.com/maps/documentation/javascript/tutorial
 
-   Note that divs usually take their width from their containing element,
-   and empty divs usually have 0 height. For this reason, you must always
-   set a height on the <div> explicitly.
+	 Note that divs usually take their width from their containing element,
+	 and empty divs usually have 0 height. For this reason, you must always
+	 set a height on the <div> explicitly.
 
-   Also:
-   This CSS declaration indicates that the map container <div> (with id map)
-   should take up 100% of the height of the HTML body. Note that we must
-   specifically declare those percentages for <body> and <html> as well.
+	 Also:
+	 This CSS declaration indicates that the map container <div> (with id map)
+	 should take up 100% of the height of the HTML body. Note that we must
+	 specifically declare those percentages for <body> and <html> as well.
 */
-
 html,
 body {
 	height: 100%;
+	margin: 0;
+	padding: 0;
 }
 
-.map {
+.container {
 	height: 100%;
 }
 
+.title-bar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	height: 8%;
+	background-color: #005;
+}
+
+.views-container {
+	height: 92%;
+	display: flex;
+}
+
+.title-text {
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	color: #fff;
+}
+
+.list-view {
+	width: 20%;
+	height: 100%;
+	background-color: #005;
+}
+
+.search-container {
+	width: 85%;
+	margin: 0 auto;
+}
+
+.search-box {
+	width: 95%;
+}
+
+.name-list {
+	color: #fff;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+li {
+	border: 1px solid white;
+}
+.map {
+	width: 80%;
+	height: 100%;
+}
 /* The images are preset sizes... I wonder if presetting the size of the div
-   would stop that weird glitch effect on the infoWindow as it's trying to load
-   the picture.  (Hmmm... maybe the width, too.  Just to make the description text
-   look a little nicer)
-   //...though isn't there even a graphical glitch when there's NO image to grab?
-   //would it be better to just delay calling .open() for a little bit?
-   //Nope!  The maps js didn't like the delay
+	 would stop that weird glitch effect on the infoWindow as it's trying to load
+	 the picture.  (Hmmm... maybe the width, too.  Just to make the description text
+	 look a little nicer)
+	 //...though isn't there even a graphical glitch when there's NO image to grab?
+	 //would it be better to just delay calling .open() for a little bit?
+	 //Nope!  The maps js didn't like the delay
 
-   margin: 0 auto for centering isn't working.  an infoWindow issue?
+	 margin: 0 auto for centering isn't working.  an infoWindow issue?
 
-   **presetting the div size does help cut down on some of the irritiating graphical
-   glitches.  However, the image still flashes as it loads.  
-
-
-   Huh, or is it because it auto-centers to where the infoWindow bubble is?  is that
-   what causes the flicker?  Because even with loaded graphics, 
-
-     **Ah, I think it's that. It draws the infoWindow.  Then it recenters and has to repaint
-     the map, and then it redraws the infoWindow.  
+	 **presetting the div size does help cut down on some of the irritiating graphical
+	 glitches.  However, the image still flashes as it loads.  
 
 
-     Okay, so setting the size of the div solves one graphical error (where it's drawing text over a nonexistent infoWindow bubble)
-     -The centering one... I think you do want it to recenter.  But is it worth the eye pain?
+	 Huh, or is it because it auto-centers to where the infoWindow bubble is?  is that
+	 what causes the flicker?  Because even with loaded graphics, 
+
+		 **Ah, I think it's that. It draws the infoWindow.  Then it recenters and has to repaint
+		 the map, and then it redraws the infoWindow.  
+
+
+		 Okay, so setting the size of the div solves one graphical error (where it's drawing text over a nonexistent infoWindow bubble)
+		 -The centering one... I think you do want it to recenter.  But is it worth the eye pain?
 */
 .info {
-   width: 200px;
-   height: 100px;
-   margin: 0 auto;
+	 width: 200px;
+	 height: 100px;
+	 margin: 0 auto;
 }
 
 .info-img {
-   margin: 0 auto;
+	 margin: 0 auto;
 }
 
 .attribution {
-   font-style: italic;
+	 font-style: italic;
 }
 
 .info-title {
-   text-align: center;
+	 text-align: center;
 }

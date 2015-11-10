@@ -6,23 +6,39 @@
 	<title>Indiana State Parks</title>
 	<link rel="stylesheet" href="css/style.css"></link>
 
-	<!--Depending on final design, async?-->
+	<!--...huh, this needs the dom loaded, thus DON'T do the callback thing here.  Must only occur AFTER dom has loaded.  ...but, then this can't really be async, right?  
+	maybe that's why the google example sticks this just before </body>  ... and they use BOTH async and defer?  Is that possible?
 
-	<script src="https://maps.googleapis.com/maps/api/js"></script>
+	whoa, they can also take an optional onload handler?  Maybe I need that?
+	http://stackoverflow.com/questions/10808109/script-tag-async-defer
+
+	<script src="https://maps.googleapis.com/maps/api/js"></script>-->
+
+	<!--this really won't be needed for a long time, but is there a way to ensure it with a callback?-->
+	<script src="js/knockout-3.3.0.js"></script>
 
 </head>
 <body>
-	<div id="map" class="map">
-	</div>
+	<div class="container">
+		<div class="title-bar">
+			<p style="color: white">TODO: menu icon/ menu text</p>
+			<h1 class="title-text">Indiana State Parks</h1>
+			<p style="color: white">TODO: state flag?</p>
+		</div>
+		<div class="views-container">
+			<div class="list-view">
+				<div class="search-container">
+					<input type="text" class="search-box" placeholder="Search by park name...">
+						<ul class="name-list" data-bind="foreach: parkList()">
+							<li class="list-item" data-bind="text: name, click: $parent.mimicMarkerClick"></li>
+						</ul>
+				</div>
+			</div>
+			<div id="map" class="map">
+			</div>
+		</div>
+	</div> <!-- /container-->
 
-	<button id="btn" type="submit">Parse data</button>
-
-	<button id="btn-create" type="submit">Create markers</button>
-	<button id="btn-place" type="submit">Place markers on map</button>
-
-
-
-	<!--Order / async / defer subject to change-->
 	<script src="js/jquery-1.11.3.min.js"></script>
 	<script src="js/main.js"></script>
 </body>
