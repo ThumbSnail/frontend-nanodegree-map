@@ -27,18 +27,17 @@ http://stackoverflow.com/questions/15594567/how-to-use-jquery-when-done
 // !!!! TODO:  any fix for that graphical glitch where google maps shows the infoWindow but
    //then recenters and makes the screen flash?
 
-var gMap;
-var infoWindow;
 var model;
 var viewModel;
-var activeMarkerIndex = -1;
+var mapView;
 
 //hmmm... is doc.ready even needed anymore?  Test that I guess
 $(document).ready(function() {
-	initMap(); //TODO:  I guess you could wrap this in a mapView or something
+	mapView = new MapView();
+	mapView.init();
 	model = new Model();  //Yes, keep all three of these separate
 	viewModel = new ViewModel();
-	if (localStorage.getItem('arrParks')) {  //but this could actually be a function of the viewModel
+	if (localStorage.getItem('arrParks')) {  //?but this could actually be a function of the viewModel
 		model.loadParksData();
 		viewModel.init();
 	}
@@ -225,6 +224,7 @@ function ViewModel() {
 	self.parkList = ko.observableArray();
 	self.currentPark = ko.observable();
 	self.arrMarkers = [];
+	self.activeMarkerIndex = -1;
 
 	self.wikiSourceStart = ko.pureComputed(function() {
 		var wikiStart = '';
@@ -248,11 +248,7 @@ function ViewModel() {
 	});
 
 	self.shouldDiplayLink = ko.pureComputed(function() {
-		if (self.currentPark().img !== '' || self.currentPark().desc !== '') {
-			return true;
-		}
-
-		return false;
+		return self.currentPark().img || self.currentPark().desc;
 	});
 
 	self.init = function() {
@@ -281,7 +277,7 @@ function ViewModel() {
 	function placeMapMarkers() {
 		var len = self.arrMarkers.length;
 		for (var i = 0; i < len; i++) {
-			self.arrMarkers[i].setMap(gMap);
+			self.arrMarkers[i].setMap(mapView.gMap);
 		}
 	}
 
@@ -290,21 +286,27 @@ function ViewModel() {
 		var len = self.arrMarkers.length;
 		for (var i = 0; i < len; i++) {
 			self.arrMarkers[i].addListener('click', function() {
-				if (this.getAnimation()) {  //then you've clicked the same marker
-					this.setAnimation(null);
-					infoWindow.close();
-					activeMarkerIndex = -1;
-				}
-				else {
-					this.setAnimation(google.maps.Animation.BOUNCE);
-					self.setCurrentPark(self.parkList()[this.id]);
-					infoWindow.open(gMap, this);
-					if (activeMarkerIndex > -1) {  //a previous marker is still bouncing
-						self.arrMarkers[activeMarkerIndex].setAnimation(null);
-					}
-					activeMarkerIndex = this.id;
-				}
+				clickMarker(this.id);
 			});
+		}
+	}
+
+	function clickMarker(id) {
+		var marker = self.arrMarkers[id];
+
+		if (marker.getAnimation()) {  //then you've clicked the same marker
+			marker.setAnimation(null);
+			mapView.closeInfoWindow();
+			self.activeMarkerIndex = -1;
+		}
+		else {
+			marker.setAnimation(google.maps.Animation.BOUNCE);
+			self.setCurrentPark(self.parkList()[marker.id]);
+			mapView.infoWindow.open(mapView.gMap, marker);
+			if (self.activeMarkerIndex > -1) {  //a previous marker is still bouncing
+				self.arrMarkers[self.activeMarkerIndex].setAnimation(null);
+			}
+			self.activeMarkerIndex = marker.id;
 		}
 	}
 
@@ -312,28 +314,46 @@ function ViewModel() {
 		self.currentPark(park);
 	};
 
-	self.mimicMarkerClick = function() {
-		console.log("You clicked me.");
+	self.mimicMarkerClick = function(park) {
+		clickMarker(park.id);
 	};
 }
 
+function MapView() {
+	var self = this;
 
-function initMap() {
-	gMap = new google.maps.Map(document.getElementById('map'), {
-		center: {lat: 39.768491, lng: -86.157679},		//center of Indiana
-		zoom: 7											//zoom: less 0 -- 18 more
-	});
+	self.gMap = '';
+	self.infoWindow = '';
+	self.knockoutDiv = $('.knockout-infowindow')[0];
 
-	infoWindow = new google.maps.InfoWindow();
-	var knockoutDiv = $('.knockout-infowindow')[0];
-	infoWindow.setContent(knockoutDiv);
+	self.init = function() {
+		initMap();
+		initInfoWindow();
+	}
 
-	google.maps.event.addListener(infoWindow,'closeclick', function() {
-		viewModel.arrMarkers[activeMarkerIndex].setAnimation(null);
-		activeMarkerIndex = -1;
-		$('.hidden').append(knockoutDiv);
-	});
+	function initMap() {
+		self.gMap = new google.maps.Map(document.getElementById('map'), {
+			center: {lat: 39.768491, lng: -86.157679},		//center of Indiana
+			zoom: 7											//zoom: less 0 -- 18 more
+		});
+	}
+
+	function initInfoWindow() {
+		self.infoWindow = new google.maps.InfoWindow();
+		self.infoWindow.setContent(self.knockoutDiv);
+
+		google.maps.event.addListener(self.infoWindow,'closeclick', self.closeInfoWindow);
+	}
+
+	self.closeInfoWindow = function() {
+		viewModel.arrMarkers[viewModel.activeMarkerIndex].setAnimation(null);
+		viewModel.activeMarkerIndex = -1;
+		$('.hidden').append(self.knockoutDiv);
+		self.infoWindow.close();
+	}
 }
+
+
 
 /* http://stackoverflow.com/questions/15317796/knockout-loses-bindings-when-google-maps-api-v3-info-window-is-closed
    ^For explaining the oddities of Knockout with Google Map's infoWindow
