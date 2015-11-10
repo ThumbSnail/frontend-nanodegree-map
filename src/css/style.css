@@ -121,6 +121,11 @@ li:hover {
 		 Okay, so setting the size of the div solves one graphical error (where it's drawing text over a nonexistent infoWindow bubble)
 		 -The centering one... I think you do want it to recenter.  But is it worth the eye pain?
 */
+
+.hidden {
+	display: none;
+}
+
 .info {
 	 width: 200px;
 	 height: 100px;

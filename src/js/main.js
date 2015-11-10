@@ -223,13 +223,44 @@ function ViewModel() {
 	var self = this;
 
 	self.parkList = ko.observableArray();
+	self.currentPark = ko.observable();
 	self.arrMarkers = [];
+
+	self.wikiSourceStart = ko.pureComputed(function() {
+		var wikiStart = '';
+
+		var img = self.currentPark().img;
+		var desc = self.currentPark().desc;
+
+		if (img && desc) {
+			wikiStart = 'Photo and fact via ';
+		}
+		else {
+			if (img) {
+				wikiStart = 'Photo via ';
+			}
+			else if (desc) {
+				wikiStart = 'Fact via ';
+			}
+		}
+
+		return wikiStart;
+	});
+
+	self.shouldDiplayLink = ko.pureComputed(function() {
+		if (self.currentPark().img !== '' || self.currentPark().desc !== '') {
+			return true;
+		}
+
+		return false;
+	});
 
 	self.init = function() {
 		self.parkList(model.arrParks);
 		createMapMarkers();
 		placeMapMarkers();
 		setupMarkerFeedback();
+		self.setCurrentPark(self.parkList()[0]);
 		ko.applyBindings(viewModel);
 	};
 
@@ -266,7 +297,7 @@ function ViewModel() {
 				}
 				else {
 					this.setAnimation(google.maps.Animation.BOUNCE);
-					infoWindow.setContent(getDataForInfoWindow(this.id));
+					self.setCurrentPark(self.parkList()[this.id]);
 					infoWindow.open(gMap, this);
 					if (activeMarkerIndex > -1) {  //a previous marker is still bouncing
 						self.arrMarkers[activeMarkerIndex].setAnimation(null);
@@ -277,47 +308,13 @@ function ViewModel() {
 		}
 	}
 
-	// TODO:  change this to utilize Knockout.  (Well, actually, maybe this whole thing would
-		//go inside the infoWindow creation.  You'll data-bind stuff in there and then clicking
-		//will instead update the 'currentPark' or 'activePark' or whatever)
-
-	function getDataForInfoWindow(index) {
-		var title = '<h1 class="info-title"><a href="https://en.wikipedia.org/wiki/'
-			+ self.parkList()[index].name + ' State Park" target="_blank">'
-			+ self.parkList()[index].name + '</a></h1>';
-		var img = self.parkList()[index].img ? '<div class="info"><img class="info-img" src="'
-			+ self.parkList()[index].img + '"></div>' : '';
-		var desc = self.parkList()[index].desc ? '<p>' + self.parkList()[index].desc + '</p>' : '';
-		var wikiEnd = 'via <a href="https://en.wikipedia.org/wiki/'
-			+ 'List_of_Indiana_state_parks" target="_blank">Wikipedia</a></p>';
-		var attrWeather = '<p class="attribution">Weather data via OpenWeatherMap</p>';
-
-		var wikiStart = '';
-		if (img && desc) {
-			wikiStart = '<p class="attribution">Photo and fact ';
-		}
-		else {
-			if (img) {
-				wikiStart = '<p class="attribution">Photo ';
-			}
-			else if (desc) {
-				wikiStart = '<p class="attribution">Fact ';
-			}
-		}
-
-		if (!wikiStart) {
-			wikiEnd = '';
-		}
-
-
-		var HTML = title + img + desc + wikiStart + wikiEnd + attrWeather;
-
-		return HTML;
-	}
+	self.setCurrentPark = function(park) {
+		self.currentPark(park);
+	};
 
 	self.mimicMarkerClick = function() {
 		console.log("You clicked me.");
-	}
+	};
 }
 
 
@@ -327,9 +324,17 @@ function initMap() {
 		zoom: 7											//zoom: less 0 -- 18 more
 	});
 
-	infoWindow = new google.maps.InfoWindow();  //just one so that only one can be open at a time
+	infoWindow = new google.maps.InfoWindow();
+	var knockoutDiv = $('.knockout-infowindow')[0];
+	infoWindow.setContent(knockoutDiv);
+
 	google.maps.event.addListener(infoWindow,'closeclick', function() {
 		viewModel.arrMarkers[activeMarkerIndex].setAnimation(null);
 		activeMarkerIndex = -1;
+		$('.hidden').append(knockoutDiv);
 	});
 }
+
+/* http://stackoverflow.com/questions/15317796/knockout-loses-bindings-when-google-maps-api-v3-info-window-is-closed
+   ^For explaining the oddities of Knockout with Google Map's infoWindow
+*/

@@ -22,7 +22,8 @@
 <body>
 	<div class="container">
 		<div class="title-bar">
-			<!--Menu Icon attribution: Timothy Miller, via https://www.iconfinder.com/icons/134216/hamburger_lines_menu_icon--> 
+			<!--Menu Icon attribution: Timothy Miller, via https://www.iconfinder.
+			com/icons/134216/hamburger_lines_menu_icon--> 
 			<img class="menu-icon" src="img/MenuIcon.svg" alt="Menu Button">
 			<h1 class="title-text">Indiana State Parks</h1>
 			<img class="title-flag" src="img/IndianaFlag.svg" alt="Indiana State Flag">
@@ -40,6 +41,25 @@
 			</div>
 		</div>
 	</div> <!-- /container-->
+
+	<!-- * This div exists so that Knockout has something to bind to.  The Google Map's
+		 * infoWindow grabs it initially and then places it back when it's closed.
+		 *
+		 * Help/Source:
+		 * http://stackoverflow.com/questions/15317796/knockout-loses-bindings-when-google
+		 -maps-api-v3-info-window-is-closed
+	-->
+	<div class="hidden">
+		<div class="knockout-infowindow" data-bind="with: currentPark()">
+			<h1 class="info-title"><a target="_blank" data-bind="attr: { href: 'https://en.wikipedia.org/wiki/' + name + ' State Park' }, text: name"></a></h1>'
+			<div class="info">
+				<img class="info-img" data-bind="attr: { src: img }">
+			</div>
+			<p class="desc" data-bind="text: desc"></p>
+			<p class="attribution" data-bind="text: $parent.wikiSourceStart"><a href="https://en.wikipedia.org/wiki/List_of_Indiana_state_parks" target="_blank" data-bind="visible: $parent.shouldDisplayLink">Wikipedia</a></p>
+			<p class="attribution">Weather data via <a href="http://www.openweathermap.org" target="_blank">OpenWeatherMap</a></p>
+		</div>
+	</div>
 
 	<script src="js/jquery-1.11.3.min.js"></script>
 	<script src="js/main.js"></script>
