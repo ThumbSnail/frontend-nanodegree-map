@@ -5,6 +5,7 @@
 	<!--Google recommended NOT allowing scaling on mobile phones?-->
 	<title>Indiana State Parks</title>
 	<link rel="stylesheet" href="css/style.css"></link>
+	<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Catamaran'>
 
 	<!--...huh, this needs the dom loaded, thus DON'T do the callback thing here.  Must only occur AFTER dom has loaded.  ...but, then this can't really be async, right?  
 	maybe that's why the google example sticks this just before </body>  ... and they use BOTH async and defer?  Is that possible?
@@ -21,9 +22,10 @@
 <body>
 	<div class="container">
 		<div class="title-bar">
-			<p style="color: white">TODO: menu icon/ menu text</p>
+			<!--Menu Icon attribution: Timothy Miller, via https://www.iconfinder.com/icons/134216/hamburger_lines_menu_icon--> 
+			<img class="menu-icon" src="img/MenuIcon.svg" alt="Menu Button">
 			<h1 class="title-text">Indiana State Parks</h1>
-			<p style="color: white">TODO: state flag?</p>
+			<img class="title-flag" src="img/IndianaFlag.svg" alt="Indiana State Flag">
 		</div>
 		<div class="views-container">
 			<div class="list-view">
