@@ -15,7 +15,8 @@ http://stackoverflow.com/questions/15594567/how-to-use-jquery-when-done
 */
 
 //  !!!! TODO:  That bug on a local machine is bad:  where it fires off 25 get requests to file://wiki-image-site
-//really slows things down.  Hopefully it won't do that on github pages... (since it's http:)
+//really slows things down.  (or is it when it tries to save to local storage?)  Hopefully it won't do that on github pages... (since it's http:)
+	//^Wow, no slowdown on mac.  What's up with my pc?  ....so, is this even an issue?
 
 // !!!! TODO:  Need to test what happens with no localStorage AND no internet/firewall blocks wiki.
   //jsonp doesn't work with .fail right?  So a .fail() after the .done() of getParksData won't
@@ -31,6 +32,7 @@ var model;
 var viewModel;
 var mapView;
 
+
 //hmmm... is doc.ready even needed anymore?  Test that I guess
 $(document).ready(function() {
 	mapView = new MapView();
@@ -42,11 +44,7 @@ $(document).ready(function() {
 		viewModel.init();
 	}
 	else {
-		model.getParksData().done(viewModel.init());
-		//^Oh weird, this never got called?  So it must fail somehow?  and thus the viewmodel is never initialized?
-		//huh, but when I manually ran viewModel.init() in the console, it said I couldn't apply bindings twice...
-		//or those get requests / localStorage slowdowns are not finishing before it fires viewModel.init?  Hmmm.
-		//the only thing that changed, though, was the addition of Knockout, right?
+		model.getParksData().done(viewModel.init);
 	}
 });
 
@@ -271,8 +269,6 @@ function ViewModel() {
 	};
 
 	self.init = function() {
-		console.log("viewModel initializing");  //??What?  I manually ran this function and nothing showed up in the log...
-		   //^This logged when loading from localStorage.  So... i have no idea.
 		self.parkList(model.arrParks);
 		createMapMarkers();
 		placeMapMarkers();
