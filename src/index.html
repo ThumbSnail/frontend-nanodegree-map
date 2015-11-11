@@ -31,8 +31,15 @@
 		<div class="views-container">
 			<div class="list-view">
 				<div class="search-container">
-					<input type="text" class="search-box" placeholder="Search by park name...">
-						<ul class="name-list" data-bind="foreach: parkList()">
+					<input data-bind="value: strSearch, valueUpdate: 'keyup'" type="text" class="search-box" placeholder="Search by park name...">
+					<select class="dropdown-field" data-bind="value: categorySearch">
+						<option value="-1">All Parks</option>
+						<option value="1">w/ Only a Photo</option>
+						<option value="2">w/ Only a Fact</option>
+						<option value="3">w/ Only Both</option>
+						<option value="0">w/ Only Neither</option>
+					</select>
+						<ul class="name-list" data-bind="foreach: filterParks">
 							<li class="list-item" data-bind="text: name, click: $parent.mimicMarkerClick"></li>
 						</ul>
 				</div>

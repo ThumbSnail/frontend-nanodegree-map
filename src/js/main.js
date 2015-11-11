@@ -32,6 +32,12 @@ var model;
 var viewModel;
 var mapView;
 
+/* Constants */
+var ALL = -1;
+var NONE = 0;
+var PHOTO = 1;
+var FACT = 2;
+var BOTH = 3;
 
 //hmmm... is doc.ready even needed anymore?  Test that I guess
 $(document).ready(function() {
@@ -87,28 +93,23 @@ var Model = function() {
 	 *  Park is the class used for storing individual park data
 	*/
 
-	self.NONE = 0;
-	self.PHOTO = 1;
-	self.FACT = 2;
-	self.BOTH = 3;
-
 	function Park(name, img, desc, coords, id) {
 		this.name = name;
 		this.img = img;
 		this.desc = desc;
 		this.coords = coords;
 		this.id = id;
-		this.details = self.NONE;
+		this.details = NONE;
 
 		if (img !== '' && desc !== '') {
-			this.details = self.BOTH;
+			this.details = BOTH;
 		}
 		else {
 			if (desc !== '') {
-				this.details = self.FACT;
+				this.details = FACT;
 			}
 			else if (img !== '') {
-				this.details = self.PHOTO;
+				this.details = PHOTO;
 			}
 		}
 	}
@@ -245,6 +246,33 @@ function ViewModel() {
 	self.currentPark = ko.observable();
 	self.arrMarkers = [];
 	self.activeMarkerIndex = -1;
+	self.categorySearch = ko.observable();
+	self.strSearch = ko.observable();
+
+	//vWeird:  why does this get called twice in the beginning?  (i guess when first parsed and then parsed after data?)
+	  //**Didn't this seem slow to show up?)
+	self.filterParks = ko.computed(function() {
+		var category = parseInt(self.categorySearch());
+		var nameRegExp = new RegExp(self.strSearch(), 'i');
+
+		return ko.utils.arrayFilter(self.parkList(), function(park) {
+			var categoryMatch; 
+			if (category === ALL) {
+				categoryMatch = true;
+			}
+			else {
+				categoryMatch = park.details === category;
+			}
+
+			var nameMatch = park.name.search(nameRegExp) >= 0;
+
+			var display = categoryMatch && nameMatch;
+
+		//also affect markers in here, too
+		//marker.show/set(display)
+			return display;
+		});
+	});
 
 	self.wikiSourceStart = ko.pureComputed(function() {
 		var wikiStart = '';
@@ -265,7 +293,7 @@ function ViewModel() {
 	});
 
 	self.shouldDisplayLink = function() {
-		return self.currentPark().details > model.NONE;
+		return self.currentPark().details > NONE;
 	};
 
 	self.init = function() {
@@ -293,13 +321,13 @@ function ViewModel() {
 
 			var icon = 'http://maps.google.com/mapfiles/ms/micons/red.png';  //none
 			switch(park.details) {
-				case model.BOTH:
+				case BOTH:
 					icon = 'http://maps.google.com/mapfiles/ms/micons/green-dot.png';  //both
 					break;
-				case model.FACT:
+				case FACT:
 					icon = 'http://maps.google.com/mapfiles/kml/pal3/icon36.png';  //info
 					break;
-				case model.PHOTO:
+				case PHOTO:
 					icon = 'http://maps.google.com/mapfiles/ms/micons/camera.png';  //pic
 					break;
 			}
