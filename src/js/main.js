@@ -43,6 +43,10 @@ $(document).ready(function() {
 	}
 	else {
 		model.getParksData().done(viewModel.init());
+		//^Oh weird, this never got called?  So it must fail somehow?  and thus the viewmodel is never initialized?
+		//huh, but when I manually ran viewModel.init() in the console, it said I couldn't apply bindings twice...
+		//or those get requests / localStorage slowdowns are not finishing before it fires viewModel.init?  Hmmm.
+		//the only thing that changed, though, was the addition of Knockout, right?
 	}
 });
 
@@ -85,12 +89,30 @@ var Model = function() {
 	 *  Park is the class used for storing individual park data
 	*/
 
+	self.NONE = 0;
+	self.PHOTO = 1;
+	self.FACT = 2;
+	self.BOTH = 3;
+
 	function Park(name, img, desc, coords, id) {
 		this.name = name;
 		this.img = img;
 		this.desc = desc;
 		this.coords = coords;
 		this.id = id;
+		this.details = self.NONE;
+
+		if (img !== '' && desc !== '') {
+			this.details = self.BOTH;
+		}
+		else {
+			if (desc !== '') {
+				this.details = self.FACT;
+			}
+			else if (img !== '') {
+				this.details = self.PHOTO;
+			}
+		}
 	}
 
 	/*  function parseData
@@ -229,33 +251,28 @@ function ViewModel() {
 	self.wikiSourceStart = ko.pureComputed(function() {
 		var wikiStart = '';
 
-		var img = self.currentPark().img;
-		var desc = self.currentPark().desc;
-
-		if (img && desc) {
-			wikiStart = 'Photo and fact via ';
-		}
-		else {
-			if (img) {
-				wikiStart = 'Photo via ';
-			}
-			else if (desc) {
+		switch (self.currentPark().details) {
+			case model.BOTH:
+				wikiStart = 'Photo and fact via ';
+				break;
+			case model.FACT:
 				wikiStart = 'Fact via ';
-			}
+				break;
+			case model.PHOTO:
+				wikiStart = 'Photo via ';
+				break;
 		}
 
 		return wikiStart;
 	});
 
 	self.shouldDisplayLink = function() {
-		if (self.currentPark().img !== '' || self.currentPark().desc !== '') {
-			return true;
-		}
-
-		return false;
+		return self.currentPark().details > model.NONE;
 	};
 
 	self.init = function() {
+		console.log("viewModel initializing");  //??What?  I manually ran this function and nothing showed up in the log...
+		   //^This logged when loading from localStorage.  So... i have no idea.
 		self.parkList(model.arrParks);
 		createMapMarkers();
 		placeMapMarkers();
@@ -276,33 +293,22 @@ function ViewModel() {
 			});
 			marker.id = i;
 
-			var details = 0;
-			if (park.img !== '' && park.desc !== '') {
-				details = 3;
-			}
-			else {
-				if (park.desc !== '') {
-					details = 2;
-				}
-				else if (park.img !== '') {
-					details = 1;
-				}
-			}
-			marker.detailLevel = details;
+			//TODO:  marker.detailLevel = details;  //probably not needed anymore
 
 			var icon = 'http://maps.google.com/mapfiles/ms/micons/red.png';  //none
-			switch(details) {
-				case 3:
+			switch(park.details) {
+				case model.BOTH:
 					icon = 'http://maps.google.com/mapfiles/ms/micons/green-dot.png';  //both
 					break;
-				case 2:
+				case model.FACT:
 					icon = 'http://maps.google.com/mapfiles/kml/pal3/icon36.png';  //info
 					break;
-				case 1:
+				case model.PHOTO:
 					icon = 'http://maps.google.com/mapfiles/ms/micons/camera.png';  //pic
 					break;
 			}
 
+			//via: http://stackoverflow.com/questions/7095574/google-maps-api-3-custom-marker-color-for-default-dot-marker
 			marker.setIcon(icon);
 
 			self.arrMarkers.push(marker);
