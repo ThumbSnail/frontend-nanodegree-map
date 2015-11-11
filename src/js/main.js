@@ -249,6 +249,7 @@ function ViewModel() {
 
 	//vWeird:  why does this get called twice in the beginning?  (i guess when first parsed and then parsed after data?)
 	  //**Didn't this seem slow to show up?)
+	//this was helpful:  http://stackoverflow.com/questions/29557938/removing-map-pin-with-search
 	self.filterParks = ko.computed(function() {
 		var category = parseInt(self.categorySearch());
 		var nameRegExp = new RegExp(self.strSearch(), 'i');
@@ -266,8 +267,8 @@ function ViewModel() {
 
 			var display = categoryMatch && nameMatch;
 
-		//also affect markers in here, too
-		//marker.show/set(display)
+			googleMapView.displayMarker(park.id, display);
+
 			return display;
 		});
 	});
@@ -349,7 +350,6 @@ function GoogleMapView() {
 	self.setUpMarkers = function(parkDataArray) {
 		var len = parkDataArray.length;
 		createMapMarkers();
-		placeMapMarkers();
 		setupMarkerFeedback();
 
 		function createMapMarkers() {
@@ -361,8 +361,6 @@ function GoogleMapView() {
 				    title: park.name,
 				});
 				marker.id = i;
-
-				//TODO:  marker.detailLevel = details;  //probably not needed anymore
 
 				var icon = 'http://maps.google.com/mapfiles/ms/micons/red.png';  //none
 				switch(park.details) {
@@ -380,15 +378,7 @@ function GoogleMapView() {
 				//via: http://stackoverflow.com/questions/7095574/google-maps-api-3-custom-marker-color-for-default-dot-marker
 				marker.setIcon(icon);
 
-				//marker.shouldDisplay =   make sure the refactor works first
-
 				self.arrMarkers.push(marker);
-			}
-		}
-
-		function placeMapMarkers() {
-			for (var i = 0; i < len; i++) {
-				self.arrMarkers[i].setMap(self.gMap);
 			}
 		}
 
@@ -419,6 +409,12 @@ function GoogleMapView() {
 				self.arrMarkers[self.activeMarkerIndex].setAnimation(null);
 			}
 			self.activeMarkerIndex = marker.id;
+		}
+	}
+
+	self.displayMarker = function(id, display) {
+		if (self.arrMarkers[id] !== undefined) {
+			display ? self.arrMarkers[id].setMap(self.gMap) : self.arrMarkers[id].setMap(null);
 		}
 	}
 }
