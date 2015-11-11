@@ -30,7 +30,7 @@ http://stackoverflow.com/questions/15594567/how-to-use-jquery-when-done
 
 var model;
 var viewModel;
-var mapView;
+var googleMapView;
 
 /* Constants */
 var ALL = -1;
@@ -41,8 +41,8 @@ var BOTH = 3;
 
 //hmmm... is doc.ready even needed anymore?  Test that I guess
 $(document).ready(function() {
-	mapView = new MapView();
-	mapView.init();
+	googleMapView = new GoogleMapView();
+	googleMapView.init();
 	model = new Model();  //Yes, keep all three of these separate
 	viewModel = new ViewModel();
 	if (localStorage.getItem('arrParks')) {  //?but this could actually be a function of the viewModel
@@ -244,8 +244,6 @@ function ViewModel() {
 
 	self.parkList = ko.observableArray();
 	self.currentPark = ko.observable();
-	self.arrMarkers = [];
-	self.activeMarkerIndex = -1;
 	self.categorySearch = ko.observable();
 	self.strSearch = ko.observable();
 
@@ -298,98 +296,29 @@ function ViewModel() {
 
 	self.init = function() {
 		self.parkList(model.arrParks);
-		createMapMarkers();
-		placeMapMarkers();
-		setupMarkerFeedback();
-		self.setCurrentPark(self.parkList()[0]);
+		googleMapView.setUpMarkers(self.parkList());
+		self.setCurrentPark(0);
 		ko.applyBindings(viewModel);
 	};
 
-	function createMapMarkers() {
-		var len = self.parkList().length;
-
-		for (var i = 0; i < len; i++) {
-			var park = self.parkList()[i];
-
-			var marker = new google.maps.Marker({
-			    position: park.coords,
-			    title: park.name,
-			});
-			marker.id = i;
-
-			//TODO:  marker.detailLevel = details;  //probably not needed anymore
-
-			var icon = 'http://maps.google.com/mapfiles/ms/micons/red.png';  //none
-			switch(park.details) {
-				case BOTH:
-					icon = 'http://maps.google.com/mapfiles/ms/micons/green-dot.png';  //both
-					break;
-				case FACT:
-					icon = 'http://maps.google.com/mapfiles/kml/pal3/icon36.png';  //info
-					break;
-				case PHOTO:
-					icon = 'http://maps.google.com/mapfiles/ms/micons/camera.png';  //pic
-					break;
-			}
-
-			//via: http://stackoverflow.com/questions/7095574/google-maps-api-3-custom-marker-color-for-default-dot-marker
-			marker.setIcon(icon);
-
-			self.arrMarkers.push(marker);
-		}
-	}
-
-	function placeMapMarkers() {
-		var len = self.arrMarkers.length;
-		for (var i = 0; i < len; i++) {
-			self.arrMarkers[i].setMap(mapView.gMap);
-		}
-	}
-
-	//adapted from:  https://developers.google.com/maps/documentation/javascript/markers
-	function setupMarkerFeedback() {
-		var len = self.arrMarkers.length;
-		for (var i = 0; i < len; i++) {
-			self.arrMarkers[i].addListener('click', function() {
-				clickMarker(this.id);
-			});
-		}
-	}
-
-	function clickMarker(id) {
-		var marker = self.arrMarkers[id];
-
-		if (marker.getAnimation()) {  //then you've clicked the same marker
-			marker.setAnimation(null);
-			mapView.closeInfoWindow();
-			self.activeMarkerIndex = -1;
-		}
-		else {
-			marker.setAnimation(google.maps.Animation.BOUNCE);
-			self.setCurrentPark(self.parkList()[marker.id]);
-			mapView.infoWindow.open(mapView.gMap, marker);
-			if (self.activeMarkerIndex > -1) {  //a previous marker is still bouncing
-				self.arrMarkers[self.activeMarkerIndex].setAnimation(null);
-			}
-			self.activeMarkerIndex = marker.id;
-		}
-	}
-
-	self.setCurrentPark = function(park) {
-		self.currentPark(park);
+	self.setCurrentPark = function(parkId) {
+		self.currentPark(self.parkList()[parkId]);
 	};
 
 	self.mimicMarkerClick = function(park) {
-		clickMarker(park.id);
+		googleMapView.clickMarker(park.id);
 	};
 }
 
-function MapView() {
+function GoogleMapView() {
 	var self = this;
 
 	self.gMap = '';
 	self.infoWindow = '';
 	self.knockoutDiv = $('.knockout-infowindow')[0];
+	self.holderDiv = $('.holder');
+	self.arrMarkers = [];
+	self.activeMarkerIndex = -1;  //could this somehow be linked to the currentPark?
 
 	self.init = function() {
 		initMap();
@@ -411,10 +340,86 @@ function MapView() {
 	}
 
 	self.closeInfoWindow = function() {
-		viewModel.arrMarkers[viewModel.activeMarkerIndex].setAnimation(null);
-		viewModel.activeMarkerIndex = -1;
-		$('.hidden').append(self.knockoutDiv);
+		self.arrMarkers[self.activeMarkerIndex].setAnimation(null);
+		self.activeMarkerIndex = -1;
+		self.holderDiv.append(self.knockoutDiv);
 		self.infoWindow.close();
+	}
+
+	self.setUpMarkers = function(parkDataArray) {
+		var len = parkDataArray.length;
+		createMapMarkers();
+		placeMapMarkers();
+		setupMarkerFeedback();
+
+		function createMapMarkers() {
+			for (var i = 0; i < len; i++) {
+				var park = parkDataArray[i];
+
+				var marker = new google.maps.Marker({
+				    position: park.coords,
+				    title: park.name,
+				});
+				marker.id = i;
+
+				//TODO:  marker.detailLevel = details;  //probably not needed anymore
+
+				var icon = 'http://maps.google.com/mapfiles/ms/micons/red.png';  //none
+				switch(park.details) {
+					case BOTH:
+						icon = 'http://maps.google.com/mapfiles/ms/micons/green-dot.png';  //both
+						break;
+					case FACT:
+						icon = 'http://maps.google.com/mapfiles/kml/pal3/icon36.png';  //info
+						break;
+					case PHOTO:
+						icon = 'http://maps.google.com/mapfiles/ms/micons/camera.png';  //pic
+						break;
+				}
+
+				//via: http://stackoverflow.com/questions/7095574/google-maps-api-3-custom-marker-color-for-default-dot-marker
+				marker.setIcon(icon);
+
+				//marker.shouldDisplay =   make sure the refactor works first
+
+				self.arrMarkers.push(marker);
+			}
+		}
+
+		function placeMapMarkers() {
+			for (var i = 0; i < len; i++) {
+				self.arrMarkers[i].setMap(self.gMap);
+			}
+		}
+
+		//adapted from:  https://developers.google.com/maps/documentation/javascript/markers
+		function setupMarkerFeedback() {
+			var len = self.arrMarkers.length;
+			for (var i = 0; i < len; i++) {
+				self.arrMarkers[i].addListener('click', function() {
+					self.clickMarker(this.id);
+				});
+			}
+		}
+	};	
+
+	self.clickMarker = function(id) {
+		var marker = self.arrMarkers[id];
+
+		if (marker.getAnimation()) {  //then you've clicked the same marker
+			marker.setAnimation(null);
+			self.closeInfoWindow();
+			self.activeMarkerIndex = -1;
+		}
+		else {
+			marker.setAnimation(google.maps.Animation.BOUNCE);
+			viewModel.setCurrentPark(marker.id);
+			self.infoWindow.open(self.gMap, marker);
+			if (self.activeMarkerIndex > -1) {  //a previous marker is still bouncing
+				self.arrMarkers[self.activeMarkerIndex].setAnimation(null);
+			}
+			self.activeMarkerIndex = marker.id;
+		}
 	}
 }
 
