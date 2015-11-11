@@ -127,9 +127,10 @@ li:hover {
 }
 
 .info {
-	 width: 200px;
+	/*Ah, you did need some kind of fixed height because the other bug is the it starts painting text over a wrong-sized infowindow
+	/* width: 200px;
 	 height: 100px;
-	 margin: 0 auto;
+	 margin: 0 auto;*/
 }
 
 .info-img {

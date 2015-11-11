@@ -247,9 +247,13 @@ function ViewModel() {
 		return wikiStart;
 	});
 
-	self.shouldDiplayLink = ko.pureComputed(function() {
-		return self.currentPark().img || self.currentPark().desc;
-	});
+	self.shouldDisplayLink = function() {
+		if (self.currentPark().img !== '' || self.currentPark().desc !== '') {
+			return true;
+		}
+
+		return false;
+	};
 
 	self.init = function() {
 		self.parkList(model.arrParks);
@@ -262,13 +266,44 @@ function ViewModel() {
 
 	function createMapMarkers() {
 		var len = self.parkList().length;
-		for (var i = 0; i < len; i++) {
-			var marker = new google.maps.Marker({
-			    position: self.parkList()[i].coords,
-			    title: self.parkList()[i].name
-			});
 
+		for (var i = 0; i < len; i++) {
+			var park = self.parkList()[i];
+
+			var marker = new google.maps.Marker({
+			    position: park.coords,
+			    title: park.name,
+			});
 			marker.id = i;
+
+			var details = 0;
+			if (park.img !== '' && park.desc !== '') {
+				details = 3;
+			}
+			else {
+				if (park.desc !== '') {
+					details = 2;
+				}
+				else if (park.img !== '') {
+					details = 1;
+				}
+			}
+			marker.detailLevel = details;
+
+			var icon = 'http://maps.google.com/mapfiles/ms/micons/red.png';  //none
+			switch(details) {
+				case 3:
+					icon = 'http://maps.google.com/mapfiles/ms/micons/green-dot.png';  //both
+					break;
+				case 2:
+					icon = 'http://maps.google.com/mapfiles/kml/pal3/icon36.png';  //info
+					break;
+				case 1:
+					icon = 'http://maps.google.com/mapfiles/ms/micons/camera.png';  //pic
+					break;
+			}
+
+			marker.setIcon(icon);
 
 			self.arrMarkers.push(marker);
 		}

@@ -51,12 +51,12 @@
 	-->
 	<div class="hidden">
 		<div class="knockout-infowindow" data-bind="with: currentPark()">
-			<h1 class="info-title"><a target="_blank" data-bind="attr: { href: 'https://en.wikipedia.org/wiki/' + name + ' State Park' }, text: name"></a></h1>'
+			<h1 class="info-title"><a target="_blank" data-bind="attr: { href: 'https://en.wikipedia.org/wiki/' + name + ' State Park' }, text: name"></a></h1>
 			<div class="info">
 				<img class="info-img" data-bind="attr: { src: img }">
 			</div>
 			<p class="desc" data-bind="text: desc"></p>
-			<span class="attribution" data-bind="text: $parent.wikiSourceStart"></span><a href="https://en.wikipedia.org/wiki/List_of_Indiana_state_parks" target="_blank" data-bind="visible: $parent.shouldDisplayLink">Wikipedia</a>
+			<span class="attribution" data-bind="text: $parent.wikiSourceStart"></span><a class="attribution" href="https://en.wikipedia.org/wiki/List_of_Indiana_state_parks" target="_blank" data-bind="visible: $parent.shouldDisplayLink()">Wikipedia</a>
 			<p class="attribution">Weather data via <a href="http://www.openweathermap.org" target="_blank">OpenWeatherMap</a></p>
 		</div>
 	</div>
