@@ -9,15 +9,7 @@
 
  -calls to weather data upon click.
 
-
-//interesting, has you create deferreds:
-http://stackoverflow.com/questions/15594567/how-to-use-jquery-when-done
 */
-
-//  !!!! TODO:  That bug on a local machine is bad:  where it fires off 25 get requests to file://wiki-image-site
-//really slows things down.  (or is it when it tries to save to local storage?)  Hopefully it won't do that on github pages... (since it's http:)
-	//^Wow, no slowdown on mac.  What's up with my pc?  ....so, is this even an issue?
-
 // !!!! TODO:  Need to test what happens with no localStorage AND no internet/firewall blocks wiki.
   //jsonp doesn't work with .fail right?  So a .fail() after the .done() of getParksData won't
   //ever trigger?  Is that correct?
@@ -45,7 +37,7 @@ $(document).ready(function() {
 	googleMapView.init();
 	model = new Model();  //Yes, keep all three of these separate
 	viewModel = new ViewModel();
-	if (localStorage.getItem('arrParks')) {  //?but this could actually be a function of the viewModel
+	if (localStorage.getItem('totalParks')) {  //?but this could actually be a function of the viewModel
 		model.loadParksData();
 		viewModel.init();
 	}
@@ -58,9 +50,24 @@ var Model = function() {
 	var self = this;
 
 	self.arrParks = [];
+	self.arrWeather = [];
 
 	self.loadParksData = function() {
-		self.arrParks = JSON.parse(localStorage.getItem('arrParks'));
+		var len = localStorage.getItem('totalParks');
+		for (var i = 0; i < len; i++) {
+			var park = JSON.parse(localStorage.getItem('park' + i));
+
+			park.weatherTemp = ko.observable('');
+			park.weatherIcon = ko.observable('');
+
+			self.arrParks.push(park);
+
+			var weather = JSON.parse(localStorage.getItem('weather' + i));
+			self.arrWeather.push(weather);
+
+			park.weatherTemp(weather.temp);
+			park.weatherIcon(weather.icon);
+		}
 	};
 
 	/*  function getParksData
@@ -114,6 +121,16 @@ var Model = function() {
 		}
 	}
 
+	/*
+	 *  Weather is the class used for storing weather data into localStorage
+	*/
+
+	function Weather() {
+		this.temp = '';
+		this.icon = '';
+		this.timeStamp = '';
+	}
+
 	/*  function parseData
 	 *
 	 *  The data retrieved from Wikipedia is a horrible string of HTML.  This function
@@ -122,6 +139,16 @@ var Model = function() {
 	*/
 
 	function parseData(wikiHTML) {
+		/* These three lines of code are really only important for the case where you're
+		 * running this app from files on a local machine.  Wikipedia's links do not contain
+		 * 'http:'.  Thus, as jQuery parses the string into DOM elements, the browser fires
+		 * off many GET requests to file:///upload.wikimedia.etc, which don't exist.  This
+		 * greatly slowed down the loading on my pc.
+		*/
+		var problemStr = '//upload.wikimedia';
+		var regExp = new RegExp(problemStr, 'gi');
+		wikiHTML = wikiHTML.replace(regExp, 'http://upload.wikimedia');
+
 		/* Grab the data in the desired columns from the table on the Wiki page */
 		var arrNames = tableColumnToArray(1, false);
 		var arrImages = tableColumnToArray(2, true);
@@ -134,18 +161,22 @@ var Model = function() {
 
 		/* Create the Model with this parks data */
 		var numParks = arrNames.length;
+		localStorage.setItem('totalParks', numParks);
 		for (var i = 0; i < numParks; i++) {
 			var park = new Park(arrNames[i], arrImages[i], arrDescs[i], arrCoords[i], i);
 
+			localStorage.setItem('park' + i, JSON.stringify(park));
+
+			//Do this here so that a lot of unnecessary data isn't saved into localStorage:
+			park.weatherTemp = ko.observable('');
+			park.weatherIcon = ko.observable('');
 			self.arrParks.push(park);
+
+			//Used to actually save the weather data into localStorage without the extra KO stuff:
+			var weather = new Weather();
+			self.arrWeather.push(weather);
+			localStorage.setItem('weather' + i, JSON.stringify(weather));
 		}
-
-		/*  Save this data into localStorage
-		 *  Help/Sources:
-		 *  http://stackoverflow.com/questions/3357553/how-to-store-an-array-in-localstorage
-		*/
-
-		localStorage.setItem('arrParks', JSON.stringify(self.arrParks));
 
 
 		/*  function tableColumnToArray(colIndex, containsImages)
@@ -173,10 +204,7 @@ var Model = function() {
 			if (containsImages) {
 				column.each(function(index, cell) {
 					var url = $('img', $(cell)).attr('src');
-					if (url) {
-						url = 'http:' + url;
-					}
-					else {
+					if (!url) {
 						url = '';
 					}
 					arr.push(url);
@@ -237,6 +265,51 @@ var Model = function() {
 			return array;
 		}
 	}
+
+	self.getWeatherData = function(parkId) {
+		var park = self.arrParks[parkId];
+		var weather = self.arrWeather[parkId];
+
+		if (weather.temp === '' || weather.timeStamp - Date.now() >= 3600000) {
+			retrieveWeatherData();
+		}
+
+		function retrieveWeatherData() {
+			//OpenWeatherMap appears to struggle finding cities with non-integer coordinates
+			var lat = Math.round(park.coords.lat);
+			var lng = Math.round(park.coords.lng);
+
+			var weatherLink = 'http://api.openweathermap.org/data/2.5/weather?lat='
+				+ lat + '&lon=' + lng + '&units=imperial&APPID='
+				+ '0a305c0d2d66d7ed45c9edd57d68e80e';
+
+				console.log(weatherLink);
+
+			$.getJSON(weatherLink).done(function(data) {
+				console.log('weather data: ');
+				console.log(data);
+				if (data.main !== undefined) {
+					weather.temp = Math.round(data.main.temp);
+					weather.icon = 'http://openweathermap.org/img/w/' + data.weather[0].icon
+						+ '.png';
+					weather.timeStamp = Date.now();
+					
+					localStorage.setItem('weather' + parkId, JSON.stringify(weather));
+
+					//And load it into the park:
+					park.weatherTemp(weather.temp);
+					park.weatherIcon(weather.icon);
+				}
+				else {
+					console.log('OpenWeatherMap unable to find that city based on coordinates');
+				}
+			})
+			.fail(function(data) {
+				console.log('Failed to get weather data');
+				console.log(data);
+			});
+		}
+	};
 };
 
 function ViewModel() {
@@ -246,6 +319,8 @@ function ViewModel() {
 	self.currentPark = ko.observable();
 	self.categorySearch = ko.observable();
 	self.strSearch = ko.observable();
+
+	self.thing = ko.observable('Come on');
 
 	//vWeird:  why does this get called twice in the beginning?  (i guess when first parsed and then parsed after data?)
 	  //**Didn't this seem slow to show up?)
@@ -308,6 +383,10 @@ function ViewModel() {
 
 	self.mimicMarkerClick = function(park) {
 		googleMapView.clickMarker(park.id);
+	};
+
+	self.refreshWeatherData = function(parkId) {
+		model.getWeatherData(parkId);
 	};
 }
 
@@ -404,6 +483,7 @@ function GoogleMapView() {
 		else {
 			marker.setAnimation(google.maps.Animation.BOUNCE);
 			viewModel.setCurrentPark(marker.id);
+			viewModel.refreshWeatherData(marker.id);
 			self.infoWindow.open(self.gMap, marker);
 			if (self.activeMarkerIndex > -1) {  //a previous marker is still bouncing
 				self.arrMarkers[self.activeMarkerIndex].setAnimation(null);

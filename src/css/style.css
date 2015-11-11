@@ -19,9 +19,14 @@ body {
 	font-family: 'Catamaran', sans-serif;
 }
 
+/*TODO:  media query for large screens*/
 .container {
 	height: 100%;
 }
+
+/*
+ * Header
+*/
 
 .title-bar {
 	display: flex;
@@ -47,6 +52,10 @@ body {
 .title-flag {
 	max-height: 100%;
 }
+
+/*
+ * Views
+*/
 
 .views-container {
 	height: 92%;

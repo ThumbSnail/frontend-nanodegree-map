@@ -59,6 +59,11 @@
 	<div class="holder hidden">
 		<div class="knockout-infowindow" data-bind="with: currentPark()">
 			<h1 class="info-title"><a target="_blank" data-bind="attr: { href: 'https://en.wikipedia.org/wiki/' + name + ' State Park' }, text: name"></a></h1>
+			<div class="info-weather">
+				<p class="info-temp" data-bind="text: weatherTemp() + ' °F'">
+				</p>
+				<img class="info-icon" data-bind="attr: { src: weatherIcon() }">
+			</div>
 			<div class="info">
 				<img class="info-img" data-bind="attr: { src: img }">
 			</div>
