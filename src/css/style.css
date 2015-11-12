@@ -1,19 +1,11 @@
 
-/* Interesting note from:
-	 https://developers.google.com/maps/documentation/javascript/tutorial
-
-	 Note that divs usually take their width from their containing element,
-	 and empty divs usually have 0 height. For this reason, you must always
-	 set a height on the <div> explicitly.
-
-	 Also:
-	 This CSS declaration indicates that the map container <div> (with id map)
-	 should take up 100% of the height of the HTML body. Note that we must
-	 specifically declare those percentages for <body> and <html> as well.
+/*
+ * General	 
 */
+
 html,
 body {
-	height: 100%;
+	height: 100%;  /* via: https://developers.google.com/maps/documentation/javascript/tutorial */
 	margin: 0;
 	padding: 0;
 	font-family: 'Catamaran', sans-serif;
@@ -28,7 +20,7 @@ body {
 @media screen and (min-width: 1200px) {
 	.container {
 		margin: 0 auto;
-		width: 1200px; /*For huge screens, just keep page in middle*/
+		width: 1200px;
 	}
 }
 
@@ -168,7 +160,7 @@ li:hover {
 
 @media screen and (max-width: 700px) {
 	.map {
-		width: 100%;	/*Full screen map for smaller devices*/
+		width: 100%;
 	}
 }
 
@@ -181,14 +173,12 @@ li:hover {
 }
 
 /*  To hide the pointless horizontal scrollbar on the info window
- *  Via:  http://stackoverflow.com/questions/16072971/google-maps-infowindow-has-horizontal-scroll-bar;
-*/
+ *  Via:  http://stackoverflow.com/questions/16072971/google-maps-infowindow-has-horizontal-scroll-bar */
 
 .gm-style-iw div { 
 	overflow-x: hidden !important; 
 }
 
-/*TODO:*/
 .knockout-infowindow {
 	width: 240px;
 	/*height: 320px;  Stops the graphical flash, but not responsive*/

@@ -17,8 +17,6 @@
 
 // !!!! TODO:  add comments to some of the code functions
 
-// !!!! TODO:  any fix for that graphical glitch where google maps shows the infoWindow but
-   //then recenters and makes the screen flash?
 
 var model;
 var viewModel;
@@ -361,10 +359,10 @@ function ViewModel() {
 				googleMapView.closeInfoWindow();
 			}
 
-			/*TODO:
-			//must do this before the map marker is placed
+			//Another choice of stopping graphical flashes vs usability. Going with usability.
+			/*
 			if (self.getCurrentParkId() === park.id && display) {
-				googleMapView.infoWindow.setOptions({disableAutoPan: true});  //stop graphical flash
+				googleMapView.infoWindow.setOptions({disableAutoPan: true});
 			}
 			*/
 
@@ -457,8 +455,8 @@ function GoogleMapView() {
 		self.infoWindow = new google.maps.InfoWindow();
 		self.infoWindow.setContent(self.knockoutDiv);
 
-		//TODO: 
-		//googleMapView.infoWindow.setOptions({disableAutoPan: true});  //stop graphical flash
+		//Enable to stop some of the graphical flashes but at cost of usability
+		//googleMapView.infoWindow.setOptions({disableAutoPan: true});
 
 		google.maps.event.addListener(self.infoWindow,'closeclick', self.closeInfoWindow);
 	}
@@ -533,31 +531,9 @@ function GoogleMapView() {
 			marker.setAnimation(google.maps.Animation.BOUNCE);
 			viewModel.setCurrentPark(marker.id);
 			viewModel.refreshWeatherData(marker.id);
-			//TODO: self.infoWindow.setOptions({disableAutoPan: false});  //when clicking, pan to it
 
-			/*if (self.gMap.getZoom() < 7) {
-				self.gMap.setZoom(7);
-			}
-			*/
-			/*
-			var pan = 1.6;
-			var currentZoom = self.gMap.getZoom();
-			if (currentZoom < 7) {
-				pan = 1.6 * 12 / currentZoom;
-			}
-			else if (currentZoom > 7) {
-				pan = 1.6 * 2 / currentZoom;
-			}
-			*/
-			//it's not linear is the problem.  not enough on far zooms
-
-			//not far enough for far zooms, too far for close zooms
-
-			//self.gMap.panTo({lat: viewModel.parkList()[marker.id].coords.lat + pan, lng: viewModel.parkList()[marker.id].coords.lng});  //this would be great if you could pan to the marker PLUS a little extra 
-
-			//could i just manually delay it?:  (doesn't work, must need to repan after it knows size of infowindow)
-			//could i guess? haha, that seems bad:  like, long + .5
-			//^for this to fully work, I'd have to force zoom, too.
+			//To stop graphical flashes, can manually pan, but at cost of infoWindow not being fully visible
+			//self.gMap.panTo(marker.getPosition());	
 			
 			self.infoWindow.open(self.gMap, marker);
 		}
