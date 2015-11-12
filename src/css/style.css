@@ -106,50 +106,61 @@ li:hover {
 	width: 80%;
 	height: 100%;
 }
-/* The images are preset sizes... I wonder if presetting the size of the div
-	 would stop that weird glitch effect on the infoWindow as it's trying to load
-	 the picture.  (Hmmm... maybe the width, too.  Just to make the description text
-	 look a little nicer)
-	 //...though isn't there even a graphical glitch when there's NO image to grab?
-	 //would it be better to just delay calling .open() for a little bit?
-	 //Nope!  The maps js didn't like the delay
 
-	 margin: 0 auto for centering isn't working.  an infoWindow issue?
-
-	 **presetting the div size does help cut down on some of the irritiating graphical
-	 glitches.  However, the image still flashes as it loads.  
-
-
-	 Huh, or is it because it auto-centers to where the infoWindow bubble is?  is that
-	 what causes the flicker?  Because even with loaded graphics, 
-
-		 **Ah, I think it's that. It draws the infoWindow.  Then it recenters and has to repaint
-		 the map, and then it redraws the infoWindow.  
-
-
-		 Okay, so setting the size of the div solves one graphical error (where it's drawing text over a nonexistent infoWindow bubble)
-		 -The centering one... I think you do want it to recenter.  But is it worth the eye pain?
+/*
+ *  infoWindow-related
 */
 
-.hidden {
+.holder {
 	display: none;
 }
 
-.info {
-	/*Ah, you did need some kind of fixed height because the other bug is the it starts painting text over a wrong-sized infowindow
-	/* width: 200px;
-	 height: 100px;
-	 margin: 0 auto;*/
+/*  To hide the pointless horizontal scrollbar on the info window
+ *  Via:  http://stackoverflow.com/questions/16072971/google-maps-infowindow-has-horizontal-scroll-bar;
+*/
+
+.gm-style-iw div { 
+	overflow-x: hidden !important; 
 }
 
-.info-img {
-	 margin: 0 auto;
+/*TODO:*/
+.knockout-infowindow {
+	width: 240px;
+	height: 320px;  /*this stops the graphical flash of the redraw at least*/
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
 }
 
-.attribution {
-	 font-style: italic;
+.title-container {
+	width: 80%;
 }
 
 .info-title {
 	 text-align: center;
+	 margin: 2% 0 2%;
 }
+
+.weather-container {
+	width: 60%;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+}
+
+.weather-text {
+	font-size: medium;
+	font-weight: 500;
+}
+
+.fact-container {
+	width: 90%;
+	text-align: center;
+}
+
+.attribution-container {
+	font-style: italic;
+	width: 90%;
+	text-align: center;
+}
+

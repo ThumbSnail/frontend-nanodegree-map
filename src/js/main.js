@@ -283,11 +283,7 @@ var Model = function() {
 				+ lat + '&lon=' + lng + '&units=imperial&APPID='
 				+ '0a305c0d2d66d7ed45c9edd57d68e80e';
 
-				console.log(weatherLink);
-
 			$.getJSON(weatherLink).done(function(data) {
-				console.log('weather data: ');
-				console.log(data);
 				if (data.main !== undefined) {
 					weather.temp = Math.round(data.main.temp);
 					weather.icon = 'http://openweathermap.org/img/w/' + data.weather[0].icon
@@ -320,7 +316,19 @@ function ViewModel() {
 	self.categorySearch = ko.observable();
 	self.strSearch = ko.observable();
 
-	self.thing = ko.observable('Come on');
+	self.emptyPark = {
+		name: '',
+		img: '',
+		desc: '',
+		coords: {
+			lat: '',
+			lng: ''
+		},
+		id: -1,
+		details: -1,
+		weatherTemp: ko.observable(''),
+		weatherIcon: ko.observable('')
+	};
 
 	//vWeird:  why does this get called twice in the beginning?  (i guess when first parsed and then parsed after data?)
 	  //**Didn't this seem slow to show up?)
@@ -342,7 +350,24 @@ function ViewModel() {
 
 			var display = categoryMatch && nameMatch;
 
+			//to handle bug where infoWindow is open, user filters, and then bindings was
+			//lost because this doesn't count as a closeclick
+			if (self.getCurrentParkId() === park.id && !display) {
+				googleMapView.closeInfoWindow();
+			}
+
+			/*TODO:
+			//must do this before the map marker is placed
+			if (self.getCurrentParkId() === park.id && display) {
+				googleMapView.infoWindow.setOptions({disableAutoPan: true});  //stop graphical flash
+			}
+			*/
+
 			googleMapView.displayMarker(park.id, display);
+
+			if (self.getCurrentParkId() === park.id && display) {
+				googleMapView.resumeMarkerBounce();
+			}
 
 			return display;
 		});
@@ -352,13 +377,13 @@ function ViewModel() {
 		var wikiStart = '';
 
 		switch (self.currentPark().details) {
-			case model.BOTH:
+			case BOTH:
 				wikiStart = 'Photo and fact via ';
 				break;
-			case model.FACT:
+			case FACT:
 				wikiStart = 'Fact via ';
 				break;
-			case model.PHOTO:
+			case PHOTO:
 				wikiStart = 'Photo via ';
 				break;
 		}
@@ -373,13 +398,25 @@ function ViewModel() {
 	self.init = function() {
 		self.parkList(model.arrParks);
 		googleMapView.setUpMarkers(self.parkList());
-		self.setCurrentPark(0);
+		self.setCurrentPark(-1);
 		ko.applyBindings(viewModel);
 	};
 
 	self.setCurrentPark = function(parkId) {
-		self.currentPark(self.parkList()[parkId]);
+		if (parkId < 0) {
+			self.currentPark(self.emptyPark);
+		}
+		else {
+			self.currentPark(self.parkList()[parkId]);
+		}
 	};
+
+	self.getCurrentParkId = function() {
+		if (self.currentPark() === undefined) {
+			return -1;
+		}
+		return self.currentPark().id;
+	}
 
 	self.mimicMarkerClick = function(park) {
 		googleMapView.clickMarker(park.id);
@@ -398,7 +435,6 @@ function GoogleMapView() {
 	self.knockoutDiv = $('.knockout-infowindow')[0];
 	self.holderDiv = $('.holder');
 	self.arrMarkers = [];
-	self.activeMarkerIndex = -1;  //could this somehow be linked to the currentPark?
 
 	self.init = function() {
 		initMap();
@@ -416,14 +452,17 @@ function GoogleMapView() {
 		self.infoWindow = new google.maps.InfoWindow();
 		self.infoWindow.setContent(self.knockoutDiv);
 
+		//TODO: 
+		googleMapView.infoWindow.setOptions({disableAutoPan: true});  //stop graphical flash
+
 		google.maps.event.addListener(self.infoWindow,'closeclick', self.closeInfoWindow);
 	}
 
 	self.closeInfoWindow = function() {
-		self.arrMarkers[self.activeMarkerIndex].setAnimation(null);
-		self.activeMarkerIndex = -1;
+		self.arrMarkers[viewModel.getCurrentParkId()].setAnimation(null);
 		self.holderDiv.append(self.knockoutDiv);
 		self.infoWindow.close();
+		viewModel.setCurrentPark(-1);
 	}
 
 	self.setUpMarkers = function(parkDataArray) {
@@ -478,17 +517,22 @@ function GoogleMapView() {
 		if (marker.getAnimation()) {  //then you've clicked the same marker
 			marker.setAnimation(null);
 			self.closeInfoWindow();
-			self.activeMarkerIndex = -1;
 		}
 		else {
+			//handle the old marker, if any
+			var currentParkId = viewModel.getCurrentParkId();
+			if (currentParkId > -1) {  //a previous marker is still bouncing
+				self.arrMarkers[currentParkId].setAnimation(null);
+			}
+			//handle the new marker
 			marker.setAnimation(google.maps.Animation.BOUNCE);
 			viewModel.setCurrentPark(marker.id);
 			viewModel.refreshWeatherData(marker.id);
+			//TODO: self.infoWindow.setOptions({disableAutoPan: false});  //when clicking, pan to it
+			self.gMap.panTo(viewModel.parkList()[marker.id].coords.lat + 1.6);  //this would be great if you could pan to the marker PLUS a little extra 
+			//could i just manually delay it?:  (doesn't work, must need to repan after it knows size of infowindow)
+			//could i guess? haha, that seems bad:  like, long + .5
 			self.infoWindow.open(self.gMap, marker);
-			if (self.activeMarkerIndex > -1) {  //a previous marker is still bouncing
-				self.arrMarkers[self.activeMarkerIndex].setAnimation(null);
-			}
-			self.activeMarkerIndex = marker.id;
 		}
 	}
 
@@ -496,6 +540,10 @@ function GoogleMapView() {
 		if (self.arrMarkers[id] !== undefined) {
 			display ? self.arrMarkers[id].setMap(self.gMap) : self.arrMarkers[id].setMap(null);
 		}
+	}
+
+	self.resumeMarkerBounce = function() {
+		self.arrMarkers[viewModel.getCurrentParkId()].setAnimation(google.maps.Animation.BOUNCE);
 	}
 }
 

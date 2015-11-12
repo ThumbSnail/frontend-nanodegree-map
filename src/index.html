@@ -56,20 +56,24 @@
 		 * http://stackoverflow.com/questions/15317796/knockout-loses-bindings-when-google
 		 -maps-api-v3-info-window-is-closed
 	-->
-	<div class="holder hidden">
+	<div class="holder">
 		<div class="knockout-infowindow" data-bind="with: currentPark()">
-			<h1 class="info-title"><a target="_blank" data-bind="attr: { href: 'https://en.wikipedia.org/wiki/' + name + ' State Park' }, text: name"></a></h1>
-			<div class="info-weather">
-				<p class="info-temp" data-bind="text: weatherTemp() + ' °F'">
+			<div class="title-container">
+				<h2 class="info-title"><a target="_blank" data-bind="attr: { href: 'https://en.wikipedia.org/wiki/' + name + ' State Park' }, text: name"></a></h2>
+			</div>
+			<div class="weather-container">
+				<p class="weather-text" data-bind="text: weatherTemp() + ' °F'">
 				</p>
-				<img class="info-icon" data-bind="attr: { src: weatherIcon() }">
+				<img class="weather-icon" data-bind="attr: { src: weatherIcon() }">
 			</div>
-			<div class="info">
-				<img class="info-img" data-bind="attr: { src: img }">
+			<img class="park-img" data-bind="attr: { src: img }">
+			<div class="fact-container">
+				<p class="park-desc" data-bind="text: desc"></p>
 			</div>
-			<p class="desc" data-bind="text: desc"></p>
-			<span class="attribution" data-bind="text: $parent.wikiSourceStart"></span><a class="attribution" href="https://en.wikipedia.org/wiki/List_of_Indiana_state_parks" target="_blank" data-bind="visible: $parent.shouldDisplayLink()">Wikipedia</a>
-			<p class="attribution">Weather data via <a href="http://www.openweathermap.org" target="_blank">OpenWeatherMap</a></p>
+			<div class="attribution-container">
+				<span data-bind="text: $parent.wikiSourceStart"></span><a href="https://en.wikipedia.org/wiki/List_of_Indiana_state_parks" target="_blank" data-bind="visible: $parent.shouldDisplayLink()">Wikipedia</a>
+				<p>Weather via <a href="http://www.openweathermap.org" target="_blank">OpenWeatherMap</a></p>
+			</div>
 		</div>
 	</div>
 
