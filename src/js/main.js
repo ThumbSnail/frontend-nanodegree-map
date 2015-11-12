@@ -17,7 +17,7 @@
 
 // !!!! TODO:  add comments to some of the code functions
 
-
+/* Globals */
 var model;
 var viewModel;
 var googleMapView;
@@ -35,12 +35,15 @@ $(document).ready(function() {
 	googleMapView.init();
 	model = new Model();  //Yes, keep all three of these separate
 	viewModel = new ViewModel();
+
 	if (localStorage.getItem('totalParks')) {  //?but this could actually be a function of the viewModel
 		model.loadParksData();
-		viewModel.init();
+		viewModel.init(true);
 	}
 	else {
-		model.getParksData().done(viewModel.init);
+		model.getParksData().done(function() {
+			viewModel.init(false);
+		});
 	}
 });
 
@@ -314,6 +317,7 @@ function ViewModel() {
 	self.isListViewActive = ko.observable(false);
 	self.categorySearch = ko.observable();
 	self.strSearch = ko.observable();
+	self.isDoneLoading = ko.observable(false);
 
 	self.emptyPark = {
 		name: '',
@@ -340,6 +344,12 @@ function ViewModel() {
 		var category = parseInt(self.categorySearch());
 		var nameRegExp = new RegExp(self.strSearch(), 'i');
 
+		//because this gets called as it's doing its bindings behind the scenes?
+		if (self.isDoneLoading()) {
+			localStorage.setItem('currentCategory', category);
+			localStorage.setItem('currentSearch', self.strSearch());
+		}
+
 		return ko.utils.arrayFilter(self.parkList(), function(park) {
 			var categoryMatch; 
 			if (category === ALL) {
@@ -355,7 +365,7 @@ function ViewModel() {
 
 			//to handle bug where infoWindow is open, user filters, and then bindings was
 			//lost because this doesn't count as a closeclick
-			if (self.getCurrentParkId() === park.id && !display) {
+			if (self.isDoneLoading() && self.getCurrentParkId() === park.id && !display) {
 				googleMapView.closeInfoWindow();
 			}
 
@@ -398,11 +408,20 @@ function ViewModel() {
 		return self.currentPark().details > NONE;
 	};
 
-	self.init = function() {
+	self.init = function(isLoadingFromStorage) {
 		self.parkList(model.arrParks);
 		googleMapView.setUpMarkers(self.parkList());
-		self.setCurrentPark(-1);
+		self.currentPark(self.emptyPark);
 		ko.applyBindings(viewModel);
+		if (isLoadingFromStorage) {
+			self.categorySearch(localStorage.getItem('currentCategory'));
+			self.strSearch(localStorage.getItem('currentSearch'));
+			var storageId = localStorage.getItem('currentParkId');
+			if ( storageId > -1) {
+				self.mimicMarkerClick(self.parkList()[storageId]);
+			}
+		}
+		self.isDoneLoading(true);
 	};
 
 	self.setCurrentPark = function(parkId) {
@@ -412,6 +431,8 @@ function ViewModel() {
 		else {
 			self.currentPark(self.parkList()[parkId]);
 		}
+
+		localStorage.setItem('currentParkId', parkId);
 	};
 
 	self.getCurrentParkId = function() {
