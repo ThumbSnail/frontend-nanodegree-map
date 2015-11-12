@@ -313,6 +313,7 @@ function ViewModel() {
 
 	self.parkList = ko.observableArray();
 	self.currentPark = ko.observable();
+	self.isListViewActive = ko.observable(false);
 	self.categorySearch = ko.observable();
 	self.strSearch = ko.observable();
 
@@ -329,6 +330,10 @@ function ViewModel() {
 		weatherTemp: ko.observable(''),
 		weatherIcon: ko.observable('')
 	};
+
+	self.toggleListView = function() {
+		self.isListViewActive(!self.isListViewActive());
+	}
 
 	//vWeird:  why does this get called twice in the beginning?  (i guess when first parsed and then parsed after data?)
 	  //**Didn't this seem slow to show up?)
@@ -453,7 +458,7 @@ function GoogleMapView() {
 		self.infoWindow.setContent(self.knockoutDiv);
 
 		//TODO: 
-		googleMapView.infoWindow.setOptions({disableAutoPan: true});  //stop graphical flash
+		//googleMapView.infoWindow.setOptions({disableAutoPan: true});  //stop graphical flash
 
 		google.maps.event.addListener(self.infoWindow,'closeclick', self.closeInfoWindow);
 	}
@@ -529,9 +534,31 @@ function GoogleMapView() {
 			viewModel.setCurrentPark(marker.id);
 			viewModel.refreshWeatherData(marker.id);
 			//TODO: self.infoWindow.setOptions({disableAutoPan: false});  //when clicking, pan to it
-			self.gMap.panTo(viewModel.parkList()[marker.id].coords.lat + 1.6);  //this would be great if you could pan to the marker PLUS a little extra 
+
+			/*if (self.gMap.getZoom() < 7) {
+				self.gMap.setZoom(7);
+			}
+			*/
+			/*
+			var pan = 1.6;
+			var currentZoom = self.gMap.getZoom();
+			if (currentZoom < 7) {
+				pan = 1.6 * 12 / currentZoom;
+			}
+			else if (currentZoom > 7) {
+				pan = 1.6 * 2 / currentZoom;
+			}
+			*/
+			//it's not linear is the problem.  not enough on far zooms
+
+			//not far enough for far zooms, too far for close zooms
+
+			//self.gMap.panTo({lat: viewModel.parkList()[marker.id].coords.lat + pan, lng: viewModel.parkList()[marker.id].coords.lng});  //this would be great if you could pan to the marker PLUS a little extra 
+
 			//could i just manually delay it?:  (doesn't work, must need to repan after it knows size of infowindow)
 			//could i guess? haha, that seems bad:  like, long + .5
+			//^for this to fully work, I'd have to force zoom, too.
+			
 			self.infoWindow.open(self.gMap, marker);
 		}
 	}

@@ -23,13 +23,14 @@
 	<div class="container">
 		<div class="title-bar">
 			<!--Menu Icon attribution: Timothy Miller, via https://www.iconfinder.
-			com/icons/134216/hamburger_lines_menu_icon--> 
-			<img class="menu-icon" src="img/MenuIcon.svg" alt="Menu Button">
+			com/icons/134216/hamburger_lines_menu_icon-->
+			<img class="title-flag second-flag" src="img/IndianaFlag.svg" alt="Indiana State Flag">
+			<img class="menu-icon" src="img/MenuIcon.svg" alt="Menu Button" data-bind="click: toggleListView()">
 			<h1 class="title-text">Indiana State Parks</h1>
 			<img class="title-flag" src="img/IndianaFlag.svg" alt="Indiana State Flag">
 		</div>
 		<div class="views-container">
-			<div class="list-view">
+			<div class="list-view overlay" data-bind="css: { offscreen: isListViewActive() }">
 				<div class="search-container">
 					<input data-bind="value: strSearch, valueUpdate: 'keyup'" type="text" class="search-box" placeholder="Search by park name...">
 					<select class="dropdown-field" data-bind="value: categorySearch">
@@ -66,7 +67,7 @@
 				</p>
 				<img class="weather-icon" data-bind="attr: { src: weatherIcon() }">
 			</div>
-			<img class="park-img" data-bind="attr: { src: img }">
+				<img class="park-img" data-bind="attr: { src: img }">
 			<div class="fact-container">
 				<p class="park-desc" data-bind="text: desc"></p>
 			</div>
