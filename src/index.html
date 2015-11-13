@@ -9,7 +9,6 @@
 	<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Catamaran'>
 	<script src="https://maps.googleapis.com/maps/api/js"></script>
 	<script src="js/knockout-3.3.0.js"></script>
-
 </head>
 <body>
 	<div class="container">
@@ -32,9 +31,9 @@
 						<option value="3">w/ Only Both</option>
 						<option value="0">w/ Only Neither</option>
 					</select>
-						<ul class="name-list" data-bind="foreach: filterParks">
-							<li class="list-item" data-bind="text: name, click: $parent.mimicMarkerClick"></li>
-						</ul>
+					<ul class="name-list" data-bind="foreach: filterParks">
+						<li class="list-item" data-bind="text: name, click: $parent.mimicMarkerClick"></li>
+					</ul>
 				</div>
 			</div>
 			<div id="map" class="map">
@@ -57,9 +56,9 @@
 			<div class="weather-container">
 				<p class="weather-text" data-bind="text: weatherTemp() + ' °F'">
 				</p>
-				<img class="weather-icon" data-bind="attr: { src: weatherIcon() }">
+				<img class="weather-icon" data-bind="attr: { src: weatherIcon() }" alt="">
 			</div>
-				<img class="park-img" data-bind="attr: { src: img }">
+			<img class="park-img" data-bind="attr: { src: img }" alt="">
 			<div class="fact-container">
 				<p class="park-desc" data-bind="text: desc"></p>
 			</div>

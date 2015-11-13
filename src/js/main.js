@@ -31,6 +31,11 @@ var Model = function() {
 	self.arrParks = [];
 	self.arrWeather = [];
 
+	/*  function loadParksData
+	 *
+	 *  Loads any saved park and weather data from localStorage
+	*/
+
 	self.loadParksData = function() {
 		var len = localStorage.getItem('totalParks');
 		for (var i = 0; i < len; i++) {
@@ -66,6 +71,11 @@ var Model = function() {
 		return $.getJSON(wikiLink, wikiCallback);
 	};
 
+	/*  function wikiCallback
+	 *
+	 *  Determines what to do with the Wikipedia data.  Handles error if unobtainable
+	*/
+
 	function wikiCallback(data) {
 		if (data.parse.text) {
 			parseData(data.parse.text['*']);
@@ -74,10 +84,12 @@ var Model = function() {
 			console.log('Error in getting Wiki data.');
 			alert('Unable to obtain State Parks data from Wikipedia.');
 		}	
-	};
+	}
 
 	/*
-	 *  Park is the class used for storing individual park data
+	 *  Class park is used for storing individual park data
+	 *
+	 *  The parameter coords takes an object like {lat: 33, lng: 80}
 	*/
 
 	function Park(name, img, desc, coords, id) {
@@ -101,16 +113,6 @@ var Model = function() {
 		}
 	}
 
-	/*
-	 *  Weather is the class used for storing weather data into localStorage
-	*/
-
-	function Weather() {
-		this.temp = '';
-		this.icon = '';
-		this.timeStamp = '';
-	}
-
 	/*  function parseData
 	 *
 	 *  The data retrieved from Wikipedia is a horrible string of HTML.  This function
@@ -123,7 +125,7 @@ var Model = function() {
 		 * running this app from files on a local machine.  Wikipedia's links do not contain
 		 * 'http:'.  Thus, as jQuery parses the string into DOM elements, the browser fires
 		 * off many GET requests to file:///upload.wikimedia.etc, which don't exist.  This
-		 * greatly slowed down the loading on my pc.
+		 * greatly slowed down the loading on my pc as it searched for all of these files.
 		*/
 		var problemStr = '//upload.wikimedia';
 		var regExp = new RegExp(problemStr, 'gi');
@@ -147,12 +149,12 @@ var Model = function() {
 
 			localStorage.setItem('park' + i, JSON.stringify(park));
 
-			//Do this here so that a lot of unnecessary data isn't saved into localStorage:
+			//Add these properties here so that unnecessary data isn't saved into localStorage
 			park.weatherTemp = ko.observable('');
 			park.weatherIcon = ko.observable('');
 			self.arrParks.push(park);
 
-			//Used to actually save the weather data into localStorage without the extra KO stuff:
+			//Keep the storage of weather data separate
 			var weather = new Weather();
 			self.arrWeather.push(weather);
 			localStorage.setItem('weather' + i, JSON.stringify(weather));
@@ -246,6 +248,24 @@ var Model = function() {
 		}
 	}
 
+	/*
+	 *  Weather is the class used for storing weather data into localStorage
+	*/
+
+	function Weather() {
+		this.temp = '';
+		this.icon = '';
+		this.timeStamp = '';
+	}
+
+	/*  function getWeatherData
+	 *
+	 *  If the model does not have any weather data for the selected park, it issues a
+	 *  GET request to OpenWeatherMap.org.  The model uses this data for at least an hour
+	 *  to comply with OpenWeatherMap's desire to limit requests.  Beyond an hour, it will
+	 *  fetch updated information.
+	*/
+
 	self.getWeatherData = function(parkId) {
 		var park = self.arrParks[parkId];
 		var weather = self.arrWeather[parkId];
@@ -254,8 +274,14 @@ var Model = function() {
 			retrieveWeatherData();
 		}
 
+		/*  function retrieveWeatherData
+		 *
+		 *  Makes the actual GET request.  Saves and loads the data into the Park objects
+		 *  if successful.  Handles errors otherwise.
+		*/
+
 		function retrieveWeatherData() {
-			//OpenWeatherMap appears to struggle finding cities with non-integer coordinates
+			//OpenWeatherMap struggles finding cities with non-integer coordinates:
 			var lat = Math.round(park.coords.lat);
 			var lng = Math.round(park.coords.lng);
 
@@ -272,7 +298,6 @@ var Model = function() {
 					
 					localStorage.setItem('weather' + parkId, JSON.stringify(weather));
 
-					//And load it into the park:
 					park.weatherTemp(weather.temp);
 					park.weatherIcon(weather.icon);
 				}
@@ -312,6 +337,12 @@ function ViewModel() {
 		weatherIcon: ko.observable('')
 	};
 
+	/*  function buildModel
+	 *
+	 *  Tells the model to either load parks data from local storage or fetch it from
+	 *  Wikipedia.  Then proceeds with initialization.
+	*/
+
 	self.buildModel = function() {
 		if (localStorage.getItem('totalParks')) {
 			model.loadParksData();
@@ -324,23 +355,40 @@ function ViewModel() {
 		}
 	};
 
+	/*  function toggleListView
+	 *
+	 *  On smaller devices, the List View is a slide-in/out menu.  When the menu button is
+	 *  pressed, this handles toggling it.
+	*/
+
 	self.toggleListView = function() {
 		self.isListViewActive(!self.isListViewActive());
-	}
+	};
 
-	//vWeird:  why does this get called twice in the beginning?  (i guess when first parsed and then parsed after data?)
-	  //**Didn't this seem slow to show up?)
-	//this was helpful:  http://stackoverflow.com/questions/29557938/removing-map-pin-with-search
+	/*  function filterParks
+	 *
+	 *  Filters the list of parks in the List View (as well as the markers on the map) based
+	 *  on the selected Details category (dropdown field) and the string in the search field.
+	 *
+	 *  Help/Sources:
+	 *  http://stackoverflow.com/questions/29557938/removing-map-pin-with-search
+	*/
+
 	self.filterParks = ko.computed(function() {
 		var category = parseInt(self.categorySearch());
 		var nameRegExp = new RegExp(self.strSearch(), 'i');
 
-		//because this gets called as it's doing its bindings behind the scenes?
+		/*  In order to correctly load the saved state of the application's last use, prevent
+		 *  Knockout from overwriting localStorage too early!
+		*/
 		if (self.isDoneLoading()) {
 			localStorage.setItem('currentCategory', category);
 			localStorage.setItem('currentSearch', self.strSearch());
 		}
 
+		/*  If the park's name AND details category match the user input, include the park
+		 *  in the list.
+		*/
 		return ko.utils.arrayFilter(self.parkList(), function(park) {
 			var categoryMatch; 
 			if (category === ALL) {
@@ -354,18 +402,14 @@ function ViewModel() {
 
 			var display = categoryMatch && nameMatch;
 
-			//to handle bug where infoWindow is open, user filters, and then bindings was
-			//lost because this doesn't count as a closeclick
+			/*  This handles the case where the infoWindow is open and then the user inputs
+			 *  a value that filters out the park/marker attached to this infoWindow, thereby
+			 *  causing the bindings to be lost because the infoWindow was not closed with a
+			 *  closeclick.
+			*/
 			if (self.isDoneLoading() && self.getCurrentParkId() === park.id && !display) {
 				googleMapView.closeInfoWindow();
 			}
-
-			//Another choice of stopping graphical flashes vs usability. Going with usability.
-			/*
-			if (self.getCurrentParkId() === park.id && display) {
-				googleMapView.infoWindow.setOptions({disableAutoPan: true});
-			}
-			*/
 
 			googleMapView.displayMarker(park.id, display);
 
@@ -376,6 +420,12 @@ function ViewModel() {
 			return display;
 		});
 	});
+
+	/*  function wikiSourceStart
+	 *
+	 *  When attribution the parks data to Wikipedia, selects the phrase that reflects the
+	 *  amount of detail provided by the Wikipedia link.
+	*/
 
 	self.wikiSourceStart = ko.pureComputed(function() {
 		var wikiStart = '';
@@ -395,15 +445,33 @@ function ViewModel() {
 		return wikiStart;
 	});
 
+	/*  function shouldDisplayLink
+	 *
+	 *  Credits Wikipedia provided that it actually gave useful data.
+	*/
+
 	self.shouldDisplayLink = function() {
 		return self.currentPark().details > NONE;
 	};
+
+	/*  function init
+	 *
+	 *  After all the parks data has been loaded or retrieved, the ViewModel takes this data
+	 *  and sets up all the views by connecting the parks to the listView and to the markers
+	 *  on the Google map.
+	 *
+	 *  isLoadingFromStorage is a bool that determines whether or not to load the last saved
+	 *  state of the application.  If true, it recreates the last state of the application by
+	 *  filling in the saved user input and, if a park was selected, 'clicking' the related
+	 *  marker to animate it and open the attached infoWindow.
+	*/
 
 	self.init = function(isLoadingFromStorage) {
 		self.parkList(model.arrParks);
 		googleMapView.setUpMarkers(self.parkList());
 		self.currentPark(self.emptyPark);
 		ko.applyBindings(viewModel);
+
 		if (isLoadingFromStorage) {
 			self.categorySearch(localStorage.getItem('currentCategory'));
 			self.strSearch(localStorage.getItem('currentSearch'));
@@ -414,6 +482,13 @@ function ViewModel() {
 		}
 		self.isDoneLoading(true);
 	};
+
+	/*  function setCurrentPark
+	 *
+	 *  Selects (and saves) the chosen park based on the provided Id number
+	 *
+	 *  When the parameter parkId is -1, an empty/blank park is selected.
+	*/
 
 	self.setCurrentPark = function(parkId) {
 		if (parkId < 0) {
@@ -426,16 +501,31 @@ function ViewModel() {
 		localStorage.setItem('currentParkId', parkId);
 	};
 
+	/*  function getCurrentParkId
+	 *
+	 *  Returns the Id attached to the currently selected park
+	*/
+
 	self.getCurrentParkId = function() {
 		if (self.currentPark() === undefined) {
 			return -1;
 		}
 		return self.currentPark().id;
-	}
+	};
+
+	/*  function mimicMarkerClick
+	 *
+	 *  Clicking on a park in the listView is equivalent to clicking a marker on the map
+	*/
 
 	self.mimicMarkerClick = function(park) {
 		googleMapView.clickMarker(park.id);
 	};
+
+	/*  function refreshWeatherData
+	 *
+	 *  Tells the model to grab (possibly updated) weather data for the chosen park
+	*/
 
 	self.refreshWeatherData = function(parkId) {
 		model.getWeatherData(parkId);
@@ -451,10 +541,20 @@ function GoogleMapView() {
 	self.holderDiv = $('.holder');
 	self.arrMarkers = [];
 
+	/*  function init
+	 *
+	 *  Initializes the Google Map and the single infoWindow
+	*/
+
 	self.init = function() {
 		initMap();
 		initInfoWindow();
 	};
+
+	/*  function initMap
+	 *
+	 *  Creates a Google Map centered over Indiana
+	*/
 
 	function initMap() {
 		self.gMap = new google.maps.Map(document.getElementById('map'), {
@@ -463,27 +563,57 @@ function GoogleMapView() {
 		});
 	}
 
+	/*  initInfoWindow
+	 *
+	 *  Creates the infoWindow, sets its content to the div containing the knockout data-binds,
+	 *  and tells it how to handle close events.
+	*/
+
 	function initInfoWindow() {
 		self.infoWindow = new google.maps.InfoWindow();
 		self.infoWindow.setContent(self.knockoutDiv);
 
-		//Enable to stop some of the graphical flashes but at cost of usability
-		//googleMapView.infoWindow.setOptions({disableAutoPan: true});
-
 		google.maps.event.addListener(self.infoWindow,'closeclick', self.closeInfoWindow);
 	}
+
+	/*  function closeInfoWindow
+	 *
+	 *  Closes an open infoWindow.  This act would typical causes Knockout to loses its 
+	 *  bindings since the infoWindow would destroy its DOM element upon being closed.  To
+	 *  work around this, the DOM element currently attached to the infoWindow is placed back
+	 *  into a hidden div in index.html.  Knockout is now continually happy.
+	 *
+	 *  Help/Sources:
+	 *  http://stackoverflow.com/questions/15317796/knockout-loses-bindings-when-google
+	 *  -maps-api-v3-info-window-is-closed
+	*/
 
 	self.closeInfoWindow = function() {
 		self.arrMarkers[viewModel.getCurrentParkId()].setAnimation(null);
 		self.holderDiv.append(self.knockoutDiv);
 		self.infoWindow.close();
 		viewModel.setCurrentPark(-1);
-	}
+	};
+
+	/*  function setUpMarkers
+	 *
+	 *  Creates all the markers based on the passed in parks array and also tells them how
+	 *  to handle clicks.
+	*/
 
 	self.setUpMarkers = function(parkDataArray) {
 		var len = parkDataArray.length;
 		createMapMarkers();
 		setupMarkerFeedback();
+
+		/*  function createMapMarkers
+		 *
+		 *  Creates a map marker for each park.  It also chooses an image for the marker based
+		 *  on the amount of details (photo, fact, both, none) available for the park.
+		 *
+		 *  Help/sources:
+		 *  http://stackoverflow.com/questions/7095574/google-maps-api-3-custom-marker-color-for-default-dot-marker
+		*/
 
 		function createMapMarkers() {
 			for (var i = 0; i < len; i++) {
@@ -498,24 +628,27 @@ function GoogleMapView() {
 				var icon = 'http://maps.google.com/mapfiles/ms/micons/red.png';  //none
 				switch(park.details) {
 					case BOTH:
-						icon = 'http://maps.google.com/mapfiles/ms/micons/green-dot.png';  //both
+						icon = 'http://maps.google.com/mapfiles/ms/micons/green-dot.png';
 						break;
 					case FACT:
-						icon = 'http://maps.google.com/mapfiles/kml/pal3/icon36.png';  //info
+						icon = 'http://maps.google.com/mapfiles/kml/pal3/icon36.png';
 						break;
 					case PHOTO:
-						icon = 'http://maps.google.com/mapfiles/ms/micons/camera.png';  //pic
+						icon = 'http://maps.google.com/mapfiles/ms/micons/camera.png';
 						break;
 				}
 
-				//via: http://stackoverflow.com/questions/7095574/google-maps-api-3-custom-marker-color-for-default-dot-marker
 				marker.setIcon(icon);
 
 				self.arrMarkers.push(marker);
 			}
 		}
 
-		//adapted from:  https://developers.google.com/maps/documentation/javascript/markers
+		/*  function setupMarkerFeedback
+		 *
+		 *  Tells the markers how to handle clicks.
+		*/
+
 		function setupMarkerFeedback() {
 			var len = self.arrMarkers.length;
 			for (var i = 0; i < len; i++) {
@@ -524,7 +657,13 @@ function GoogleMapView() {
 				});
 			}
 		}
-	};	
+	};
+
+	/*  function clickMarker
+	 *
+	 *  Toggles marker animation.  Opens/closes the connected infoWindow.  Updates the
+	 *  connected park.
+	*/
 
 	self.clickMarker = function(id) {
 		var marker = self.arrMarkers[id];
@@ -534,36 +673,40 @@ function GoogleMapView() {
 			self.closeInfoWindow();
 		}
 		else {
-			//handle the old marker, if any
+			/* Handle the old, bouncing marker, if any */
 			var currentParkId = viewModel.getCurrentParkId();
-			if (currentParkId > -1) {  //a previous marker is still bouncing
+			if (currentParkId > -1) {
 				self.arrMarkers[currentParkId].setAnimation(null);
 			}
-			//handle the new marker
+			/* Handle the new marker and thus the newly selected park */
 			marker.setAnimation(google.maps.Animation.BOUNCE);
 			viewModel.setCurrentPark(marker.id);
 			viewModel.refreshWeatherData(marker.id);
-
-			//To stop graphical flashes, can manually pan, but at cost of infoWindow not being fully visible
-			//self.gMap.panTo(marker.getPosition());	
 			
 			self.infoWindow.open(self.gMap, marker);
 		}
-	}
+	};
+
+	/*  function displayMarker
+	 *
+	 *  Hides or shows a marker.  Used by the viewModel when it filters the list of parks.
+	 *
+	 *  Takes the id of the park/marker and a bool to display it or not.
+	*/
 
 	self.displayMarker = function(id, display) {
 		if (self.arrMarkers[id] !== undefined) {
 			display ? self.arrMarkers[id].setMap(self.gMap) : self.arrMarkers[id].setMap(null);
 		}
-	}
+	};
+
+	/*  function resumeMarkerBounce
+	 *
+	 *  The filter function in the viewModel can kill the animation on an active marker.
+	 *  This resumes the animation to give the user consistent feedback.
+	*/
 
 	self.resumeMarkerBounce = function() {
 		self.arrMarkers[viewModel.getCurrentParkId()].setAnimation(google.maps.Animation.BOUNCE);
-	}
+	};
 }
-
-
-
-/* http://stackoverflow.com/questions/15317796/knockout-loses-bindings-when-google-maps-api-v3-info-window-is-closed
-   ^For explaining the oddities of Knockout with Google Map's infoWindow
-*/
