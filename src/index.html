@@ -2,20 +2,12 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<!--Google recommended NOT allowing scaling on mobile phones?-->
+	<!--User-scalable=no via: https://developers.google.com/maps/documentation/javascript/basics -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 	<title>Indiana State Parks</title>
-	<link rel="stylesheet" href="css/style.css"></link>
+	<link rel="stylesheet" href="css/style.css">
 	<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Catamaran'>
-
-	<!--...huh, this needs the dom loaded, thus DON'T do the callback thing here.  Must only occur AFTER dom has loaded.  ...but, then this can't really be async, right?  
-	maybe that's why the google example sticks this just before </body>  ... and they use BOTH async and defer?  Is that possible?
-
-	whoa, they can also take an optional onload handler?  Maybe I need that?
-	http://stackoverflow.com/questions/10808109/script-tag-async-defer-->
-
 	<script src="https://maps.googleapis.com/maps/api/js"></script>
-
-	<!--this really won't be needed for a long time, but is there a way to ensure it with a callback?-->
 	<script src="js/knockout-3.3.0.js"></script>
 
 </head>

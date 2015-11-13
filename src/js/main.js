@@ -1,22 +1,3 @@
-//Order of all this stuff...
-/*
- -basic map can fire right away  (can stick the initMap as a callback on the google script)
- -wiki / localStorage data grab == can fire right away
-
- -**creating the map markers == google script must be loaded AND wiki/localStorage must be done
-  -then place the map markers / create the infoWindow
-   --^Really, the list shouldn't be clickable until the map markers are created (AND placed)
-
- -calls to weather data upon click.
-
-*/
-// !!!! TODO:  Need to test what happens with no localStorage AND no internet/firewall blocks wiki.
-  //jsonp doesn't work with .fail right?  So a .fail() after the .done() of getParksData won't
-  //ever trigger?  Is that correct?
-  // TODO:  Better error handling in general
-
-// !!!! TODO:  add comments to some of the code functions
-
 /* Globals */
 var model;
 var viewModel;
@@ -29,21 +10,18 @@ var PHOTO = 1;
 var FACT = 2;
 var BOTH = 3;
 
-//hmmm... is doc.ready even needed anymore?  Test that I guess
 $(document).ready(function() {
-	googleMapView = new GoogleMapView();
-	googleMapView.init();
-	model = new Model();  //Yes, keep all three of these separate
-	viewModel = new ViewModel();
-
-	if (localStorage.getItem('totalParks')) {  //?but this could actually be a function of the viewModel
-		model.loadParksData();
-		viewModel.init(true);
+	if (typeof google === 'undefined') {
+		console.log('Unable to access Google Maps API.');
+		alert('Unable to access Google Maps API.  Please check your internet connection'
+			+ ' and/or firewall.');
 	}
 	else {
-		model.getParksData().done(function() {
-			viewModel.init(false);
-		});
+		googleMapView = new GoogleMapView();
+		googleMapView.init();
+		model = new Model();
+		viewModel = new ViewModel();
+		viewModel.buildModel();
 	}
 });
 
@@ -92,8 +70,9 @@ var Model = function() {
 		if (data.parse.text) {
 			parseData(data.parse.text['*']);
 		}
-		else {  // TODO:  Better handling
-			console.log("Error in getting Wiki data.");
+		else {
+			console.log('Error in getting Wiki data.');
+			alert('Unable to obtain State Parks data from Wikipedia.');
 		}	
 	};
 
@@ -298,11 +277,11 @@ var Model = function() {
 					park.weatherIcon(weather.icon);
 				}
 				else {
-					console.log('OpenWeatherMap unable to find that city based on coordinates');
+					console.log('OpenWeatherMap unable to find that city based on coordinates.');
 				}
 			})
 			.fail(function(data) {
-				console.log('Failed to get weather data');
+				console.log('Failed to get weather data from OpenWeatherMap:');
 				console.log(data);
 			});
 		}
@@ -331,6 +310,18 @@ function ViewModel() {
 		details: -1,
 		weatherTemp: ko.observable(''),
 		weatherIcon: ko.observable('')
+	};
+
+	self.buildModel = function() {
+		if (localStorage.getItem('totalParks')) {
+			model.loadParksData();
+			self.init(true);
+		}
+		else {
+			model.getParksData().done(function() {
+				self.init(false);
+			});
+		}
 	};
 
 	self.toggleListView = function() {
@@ -463,7 +454,7 @@ function GoogleMapView() {
 	self.init = function() {
 		initMap();
 		initInfoWindow();
-	}
+	};
 
 	function initMap() {
 		self.gMap = new google.maps.Map(document.getElementById('map'), {
