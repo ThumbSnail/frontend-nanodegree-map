@@ -1,0 +1,10 @@
+{
+  "name": "frontend-nanodegree-map",
+  "version": "1.0.0",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-minify-css": "^1.2.1",
+    "gulp-svgmin": "^1.2.0",
+    "gulp-uglify": "^1.5.1"
+  }
+}

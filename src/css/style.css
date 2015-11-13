@@ -1,4 +1,3 @@
-
 /*
  * General	 
 */
@@ -29,8 +28,14 @@ body {
 */
 
 .title-bar {
+	display: -webkit-flex;
+	display: -ms-flexbox;
 	display: flex;
+	-webkit-justify-content: space-between;
+	-ms-flex-pack: justify;
 	justify-content: space-between;
+	-webkit-align-items: center;
+	-ms-flex-align: center;
 	align-items: center;
 	width: 100%;
 	height: 8%;
@@ -89,6 +94,8 @@ body {
 
 .views-container {
 	height: 92%;
+	display: -webkit-flex;
+	display: -ms-flexbox;
 	display: flex;
 }
 
@@ -96,8 +103,11 @@ body {
 	width: 200px;
 	height: 100%;
 	background-color: #000f5d;
+	-webkit-transform: translate(0, 0);
 	transform: translate(0, 0);
+	transition: -webkit-transform 0.3s ease;
 	transition: transform 0.3s ease;
+	transition: transform 0.3s ease, -webkit-transform 0.3s ease;
 }
 
 @media screen and (max-width: 700px) {
@@ -107,8 +117,11 @@ body {
 	}
 
 	.offscreen {
+		-webkit-transform: translate(-200px, 0);
 		transform: translate(-200px, 0);
+		transition: -webkit-transform 0.3s ease;
 		transition: transform 0.3s ease;
+		transition: transform 0.3s ease, -webkit-transform 0.3s ease;
 	}
 }
 
@@ -181,8 +194,14 @@ li:hover {
 .knockout-infowindow {
 	width: 240px;
 	/*height: 320px;  Stops the graphical flash, but not responsive*/
+	display: -webkit-flex;
+	display: -ms-flexbox;
 	display: flex;
+	-webkit-justify-content: center;
+	-ms-flex-pack: center;
 	justify-content: center;
+	-webkit-flex-wrap: wrap;
+	-ms-flex-wrap: wrap;
 	flex-wrap: wrap;
 }
 
@@ -197,8 +216,14 @@ li:hover {
 
 .weather-container {
 	width: 60%;
+	display: -webkit-flex;
+	display: -ms-flexbox;
 	display: flex;
+	-webkit-justify-content: space-around;
+	-ms-flex-pack: distribute;
 	justify-content: space-around;
+	-webkit-align-items: center;
+	-ms-flex-align: center;
 	align-items: center;
 }
 
