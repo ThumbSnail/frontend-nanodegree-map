@@ -319,7 +319,7 @@ function ViewModel() {
 	self.parkList = ko.observableArray();
 	self.currentPark = ko.observable();
 	self.isListViewActive = ko.observable(false);
-	self.categorySearch = ko.observable(0);
+	self.categorySearch = ko.observable();
 	self.strSearch = ko.observable('');
 	self.isDoneLoading = ko.observable(false);
 
