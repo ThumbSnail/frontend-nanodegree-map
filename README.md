@@ -9,16 +9,16 @@ A.  Description
 
 B.  How to Run/Download
 
-	1.  Visit this link in your browser (easiest)
-
+	1.  Visit the following link in your browser:
 [http://thumbsnail.github.io/frontend-nanodegree-map](http://thumbsnail.github.io/frontend-nanodegree-map)
 
-	2.  Download the project's .zip file.  Then open dist/index.html for the production files
+	2.  Download the project's .zip file:
+[https://github.com/ThumbSnail/frontend-nanodegree-map/archive/master.zip](https://github.com/ThumbSnail/frontend-nanodegree-map/archive/master.zip)
+		Then open dist/index.html for the production files
 		or open src/index.html for the source files (which include comments).
 
-[https://github.com/ThumbSnail/frontend-nanodegree-map/archive/master.zip](https://github.com/ThumbSnail/frontend-nanodegree-map/archive/master.zip)
 
-	3.  Clone the repository
+	3.  Clone the repository:
 		git clone https://github.com/ThumbSnail/frontend-nanodegree-map.git
 		Then open dist/index.html for the production files or open src/index.html for the
 		source files (which include comments).
